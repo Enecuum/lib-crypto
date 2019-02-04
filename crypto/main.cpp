@@ -77,6 +77,47 @@ private:
 	int numberDec;
 };
 
+BigNumber operator + (BigNumber c1, BigNumber c2)
+{
+	bignum_digit_t *res = c1.hex();
+	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
+	bignum_madd(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
+	return BigNumber(res);
+}
+
+BigNumber operator - (BigNumber c1, BigNumber c2)
+{
+	bignum_digit_t *res = c1.hex();
+	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
+	bignum_msub(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
+	return BigNumber(res);
+}
+
+BigNumber operator / (BigNumber c1, BigNumber c2)
+{
+	bignum_digit_t *res = c1.hex();
+	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
+	bignum_mdiv(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
+	return BigNumber(res);
+}
+
+BigNumber operator * (BigNumber c1, BigNumber c2)
+{
+	bignum_digit_t *res = c1.hex();
+	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
+	bignum_mmul(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
+	return BigNumber(res);
+}
+
+int operator == (BigNumber c1, BigNumber c2)
+{
+	int res = bignum_cmp(c1.hex(), c2.hex(), ECCRYPT_BIGNUM_DIGITS);
+	if (res == 0)
+		return 1;
+	else
+		return 0;
+}
+
 class EPoint {
 	public:
 		EPoint() {
@@ -102,6 +143,7 @@ class EPoint {
 			BigNumber x(*p.x);
 			BigNumber y(*p.y);
 			EPoint *res = new EPoint(x, y);
+			res->curve = curve;
 			return res;
 		}
 		eccrypt_point_t convert(EPoint P) {
@@ -137,7 +179,8 @@ class EPoint {
 			bignum_digit_t q[BIGNUM_MAX_DIGITS];// = curve->m;
 			memcpy(q, curve->m, sizeof(bignum_digit_t));
 			bignum_sub(q, bc.y, ECCRYPT_BIGNUM_DIGITS);
-			*bc.y = *q;
+			memcpy(bc.y, q, sizeof(bignum_digit_t));
+			//*bc.y = *q;
 			eccrypt_point_add(&rslt, &ac, &bc, curve);
 			return convert(rslt);
 		}
@@ -152,8 +195,6 @@ class EPoint {
 };
 
 BigNumber* weilPairing(EPoint P, EPoint Q, EPoint S);
-
-//struct eccrypt_curve_t curve;
 
 int finiteDiv(int up, int down, int p, vector<int> invs) {
 	if (down < 0){
@@ -255,13 +296,6 @@ vector<int> shamir(int secretM, int participantN, int sufficientK)
 	return arrayK;
 }
 
-int usage(char* progname) {
-	printf("Usage: %s add x1 y1 x2 y2\n"
-		"       %s mul x  y  k\n", progname, progname);
-	system("pause");
-	return 0;
-}
-
 vector<EPoint> keyProj(int* coalition, vector<int> shares, EPoint *G) {
 	EPoint buff();
 	vector<EPoint> res;
@@ -319,14 +353,14 @@ int main(int argc, char ** argv)
 
 	BigNumber* k = new BigNumber(10);
 
-	EPoint* p3 = new EPoint(972, 795);
-	p3->setCurve(&curve);
+	EPoint* g0 = new EPoint(972, 795);
+	g0->setCurve(&curve);
 
-	EPoint *res;
+	EPoint *mpk;
 
 	std::cout << "MPK = MSK * G0" << "\r\n";
-	res = p3->mul(*k, *p3);
-	std::cout << res->x.toString() << " " << res->y.toString() << "\r\n";
+	mpk = g0->mul(*k, *g0);
+	std::cout << mpk->x.toString() << " " << mpk->y.toString() << "\r\n";
 
 	std::cout << "\r\n      PKG keys generation \r\n";
 	// Вычисляем публичный ключ на этот сеанс
@@ -365,15 +399,15 @@ int main(int argc, char ** argv)
 		std::cout << "(" << proj[i].x.toString() << ", " << proj[i].y.toString() << "), ";
 	}
 
-	std::cout << "\r\nRecovered secret: " << "\r\n";
+	std::cout << "\r\nRecovered secret: SK" << "\r\n";
 
 	EPoint secret = keyRecovery(proj, coalition, 13);
 	std::cout << secret.x.toString() << " " << secret.y.toString() << "\r\n";
 
 	// Проверка полученного секрета
-	std::cout << "Check: MSK * Q " << "\r\n";
-	res = Q->mul(*k, *Q);
-	std::cout << res->x.toString() << " " << res->y.toString() << "\r\n";
+	std::cout << "Check: SK = MSK * Q " << "\r\n";
+	EPoint *check = Q->mul(*k, *Q);
+	std::cout << check->x.toString() << " " << check->y.toString() << "\r\n";
 
 	//
 	//	Постановка подписи
@@ -384,7 +418,8 @@ int main(int argc, char ** argv)
 	BigNumber M(200);
 	BigNumber *r2 = new BigNumber(7);
 	EPoint *s1;
-	s1 = p3->mul(*r2, *p3);
+	// R = rP
+	s1 = g0->mul(*r2, *g0);
 	s1->setCurve(&curve);
 	std::cout << "S1: " << s1->x.toString() << " " << s1->y.toString() << "\r\n";
 	
@@ -396,83 +431,85 @@ int main(int argc, char ** argv)
 	H->setCurve(&curve);
 	// S2 = r*H + SecKey
 	EPoint *s2;
+	// S = sQ + rH
 	s2 = H->mul(*r2, *H);
 	s2->setCurve(&curve);
 	s2 = secret.add(*s2, secret);
 	std::cout << "S2: " << s2->x.toString() << " " << s2->y.toString() << "\r\n";
 	
-	std::cout << "Verification" << "\r\n";
-	
+	std::cout << "      Verification" << "\r\n";
+	std::cout << "Weil pairing" << "\r\n";
 	// Спаривания...
-	/*
+	
 	EPoint *S = new EPoint(BigNumber(0), BigNumber(522));
-	BigNumber *weil = weilPairing(*p3, *s2, *S);
-	EPoint *sub = p3->sub(*p3, *S);
-	//std::cout << "weil pairing " << weil.toString() << "\r\n";
-	std::cout << "G0 - S: " << sub->x.toString() << " " << sub->y.toString() << "\r\n";
-	std::cout << "weil: " << weil->toString() << "\r\n";
-	*/
+	S->setCurve(&curve);
+	s2->setCurve(&curve);
+	BigNumber r1(*weilPairing(*g0, *s2, *S));
+	std::cout << "r1 = e(P, S)\t" << r1.toString() << "\r\n";
+
+	BigNumber b1(*weilPairing(*mpk, *Q, *S));
+	std::cout << "b1\t" << b1.toString() << "\r\n";
+
+	BigNumber c1(*weilPairing(*s1, *H, *S));
+	std::cout << "c1\t" << c1.toString() << "\r\n";
+
+	BigNumber b1c1 = b1 * c1;
+	std::cout << "r1 = b1 * c1\t" << b1c1.toString() << "\r\n";
+	//EPoint *sub = g0->sub(*g0, *S);
+	
+	//std::cout << "G0 - S: " << sub->x.toString() << " " << sub->y.toString() << "\r\n";
+	
 	system("pause");
 	return 0;
 }
-BigNumber* operator + (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	//memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-
-	bignum_add(res, c2.hex(), ECCRYPT_BIGNUM_DIGITS);
-	return &BigNumber(res);
-}
-/*
 
 BigNumber* g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
-	//(x_P, y_P) = P.xy()
-		//(x_Q, y_Q) = Q.xy()
-		//R, (x, y) = PolynomialRing(GF(p), 'x, y').objgens()
 	BigNumber x_P = P.x;
 	BigNumber y_P = P.y;
 	BigNumber x_Q = Q.x;
 	BigNumber y_Q = Q.y;
-	if(x_P == x_Q && y_P + y_Q == 0) {
-		return x1 - x_P;
+	BigNumber a(a);
+	BigNumber slope;
+	if((x_P == x_Q) && ((y_P + y_Q) == 0)) {
+		return &(x1 - x_P);
 	}
-	if (P == Q) {
-		slope = (3 * x_P ^ 2 + a) / (2 * y_P);
+	if (((x_P == x_Q) && (y_P == y_Q))) {
+		slope = (BigNumber(3) * (x_P * x_P) + a) / (y_P + y_P);
 	}
 	else {
 		slope = (y_P - y_Q) / (x_P - x_Q);
 	}
-	return (y1 - y_P - slope * (x1 - x_P)) / (x1 + x_P + x_Q - slope ^ 2);
+	BigNumber test = ((x1 - x_P));
+	return &((y1 - y_P - (slope * (x1 - x_P))) / (x1 + x_P + x_Q - (slope * slope)));
 }
-*/
+
 BigNumber* miller(int n, EPoint P, BigNumber x1, BigNumber y1) {
 	// TODO: Перевод в бинарную строку
 	// Почему-то обрубается первый бит
 
 	char m[] = "011011";
-	//int n = 6;
 
-	//m = bin(m)[3:]
-	//	n = len(m)
-	//	T = P
-	//	f = 1
-	//	for i in range(n) :
-
-	//		f = f ^ 2 * g(T, T, x1, y1)
-	//		T = T + T
-	//		if int(m[i]) == 1 :
-	//			f = f * g(T, P, x1, y1)
-	//			T = T + P
-	//			return f
-	// Возвращает функцию
 	BigNumber *res = new BigNumber(1);
-	return res;
+
+	EPoint T(BigNumber(1), BigNumber(1));
+	T.setCurve(&curve);
+	EPoint buf(BigNumber(1), BigNumber(1));
+	buf.setCurve(&curve);
+	memcpy(&T, &P, sizeof(EPoint));
+	BigNumber f(1);
+	for (int i = 0; i < n; i++) {
+		f = f * (f * (*g(T, T, x1, y1)));
+		T = *(T.mul(BigNumber(2), T));
+		if (m[i] == '1') {
+			f = f * (*g(T, P, x1, y1));
+			T = *(T.add(T, P));
+		}
+		int qq = 1;
+	}
+	return &f;
 }
 
 BigNumber* evalMiller(EPoint P, EPoint Q) {
-
-	//(x1, y1) = Q.xy()
-	//	return (miller(n, P, x1, y1))
 	BigNumber* res = miller(6, P, Q.x, Q.y);
 	return res;
 }
@@ -483,12 +520,9 @@ BigNumber* weilPairing(EPoint P, EPoint Q, EPoint S) {
 	//int den = eval_miller(Q, P - S) / eval_miller(Q, -S)
 	//return (num / den)
 
-	BigNumber a{ 20 };
-	BigNumber b{ 34 };
-	BigNumber *num = a + b;
-	//BigNumber* num = evalMiller(P, *Q.add(Q, S));
-
-	return num;
+	BigNumber num = (*(evalMiller(P, *Q.add(Q, S))) / *(evalMiller(P, S)));
+	BigNumber den = (*(evalMiller(Q, *P.sub(P, S))) / *(evalMiller(Q, *S.sub(EPoint(BigNumber(0), BigNumber(0)) , S))));
+	return &(num / den);
 }
 
 bool prime(long long n)
@@ -498,5 +532,3 @@ bool prime(long long n)
 			return false;
 	return true;
 }
-
-
