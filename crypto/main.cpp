@@ -13,9 +13,9 @@
 #include <ctime>
 #include <string> 
 #include <math.h> 
-#include <openssl/obj_mac.h>
-#include <openssl/ec.h>
-#include <openssl/sha.h>
+//#include <openssl/obj_mac.h>
+//#include <openssl/ec.h>
+//#include <openssl/sha.h>
 //#pragma comment(lib,"libcrypto.lib")
 using namespace std;
 struct eccrypt_curve_t curve;
@@ -37,14 +37,14 @@ public:
 	BigNumber(char* number) {
 		//this->numberDec = number;
 		//bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		char buf[65];
+		//char buf[65];
 		//_itoa(number, buf, 16);
 		bignum_fromhex(rslt, number, BIGNUM_MAX_DIGITS);
 	}
 	BigNumber(string number) {
 		//this->numberDec = number;
 		//bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		char buf[65];
+		//char buf[65];
 		//_itoa(number, buf, 16);
 		bignum_fromhex(rslt, &number[0], BIGNUM_MAX_DIGITS);
 	}
@@ -193,7 +193,7 @@ class EPoint {
 		int is_inf;
 };
 
-BigNumber* weilPairing(EPoint P, EPoint Q, EPoint S);
+BigNumber weilPairing(EPoint P, EPoint Q, EPoint S);
 
 int finiteDiv(int up, int down, int p, vector<int> invs) {
 	if (down < 0){
@@ -230,7 +230,6 @@ EPoint keyRecovery(vector<EPoint> proj, int* coalition, int q) {
 				lambda = (finiteDiv(lambda * (0 - coalition[j]), coalition[i] - coalition[j], q, invs)) % q;
 			}
 		}
-		eccrypt_point_t secBuf, resBuf, projBuf;
 		if (lambda == 0)
 			continue;
 		EPoint buff;// = new EPoint();
@@ -296,25 +295,18 @@ vector<int> shamir(int secretM, int participantN, int sufficientK)
 }
 
 vector<EPoint> keyProj(int* coalition, vector<int> shares, EPoint *G) {
-	EPoint buff();
 	vector<EPoint> res;
-	char buffer[256];
-	//bignum_digit_t c[ECCRYPT_BIGNUM_DIGITS];
-	
 	for (int i = 0; i < 6; i++) {
-		char share[65];
 		BigNumber c(shares.at(coalition[i] - 1));
-		//_itoa(shares.at(coalition[i] - 1), share, 16);
-		//bignum_fromhex(c, share, ECCRYPT_BIGNUM_DIGITS);
-		EPoint *p;
-		p = G->mul(c, *G);
+		EPoint *p = G->mul(c, *G);
+
 		p->setCurve(&curve);
 		//eccrypt_point_mul(&buff, &G, c, &curve);
 		res.insert(res.end(), *p);
 	}
 	return res;
 }
-
+/*
 void hash() {
 	char ibuf[] = "compute sha1";
 	unsigned char obuf[20];
@@ -327,14 +319,16 @@ void hash() {
 	}
 	printf("\n");
 }
-
+*/
 int main(int argc, char ** argv)
 {
 	// OpenSSL curve test
+	/*
 	EC_GROUP *curve1;
 
 	if (NULL == (curve1 = EC_GROUP_new_by_curve_name(NID_secp224r1)))
 		std::cout << "error" << "\r\n";
+	*/
 	/* инициализируем параметры кривой */
 
 	// Точка-генератор пока задаается вручную
@@ -386,7 +380,7 @@ int main(int argc, char ** argv)
 
 	std::cout << "Key sharing: " << "\r\n";
 	
-	vector<int> shares = shamir(10, 10, 6);
+	vector<int> shares = shamir(k->dec(), 10, 6);
 	for (int i = 0; i < shares.size(); i++)
 		std::cout << shares.at(i) << " ";
 	std::cout << "\r\nKey recovery" << "\r\n";
@@ -443,13 +437,13 @@ int main(int argc, char ** argv)
 	EPoint *S = new EPoint(BigNumber(0), BigNumber(522));
 	S->setCurve(&curve);
 	s2->setCurve(&curve);
-	BigNumber r1(*weilPairing(*g0, *s2, *S));
+	BigNumber r1(weilPairing(*g0, *s2, *S));
 	std::cout << "r1 = e(P, S)\t" << r1.toString() << "\r\n";
 
-	BigNumber b1(*weilPairing(*mpk, *Q, *S));
+	BigNumber b1(weilPairing(*mpk, *Q, *S));
 	std::cout << "b1\t" << b1.toString() << "\r\n";
 
-	BigNumber c1(*weilPairing(*s1, *H, *S));
+	BigNumber c1(weilPairing(*s1, *H, *S));
 	std::cout << "c1\t" << c1.toString() << "\r\n";
 
 	BigNumber b1c1 = b1 * c1;
@@ -462,7 +456,7 @@ int main(int argc, char ** argv)
 	return 0;
 }
 
-BigNumber* g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
+BigNumber g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
 	BigNumber x_P = P.x;
 	BigNumber y_P = P.y;
 	BigNumber x_Q = Q.x;
@@ -470,7 +464,7 @@ BigNumber* g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
 	BigNumber a(a);
 	BigNumber slope;
 	if((x_P == x_Q) && ((y_P + y_Q) == 0)) {
-		return &(x1 - x_P);
+		return (x1 - x_P);
 	}
 	if (((x_P == x_Q) && (y_P == y_Q))) {
 		slope = (BigNumber(3) * (x_P * x_P) + a) / (y_P + y_P);
@@ -479,10 +473,10 @@ BigNumber* g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
 		slope = (y_P - y_Q) / (x_P - x_Q);
 	}
 	BigNumber test = ((x1 - x_P));
-	return &((y1 - y_P - (slope * (x1 - x_P))) / (x1 + x_P + x_Q - (slope * slope)));
+	return (y1 - y_P - (slope * (x1 - x_P))) / (x1 + x_P + x_Q - (slope * slope));
 }
 
-BigNumber* miller(int n, EPoint P, BigNumber x1, BigNumber y1) {
+BigNumber miller(int n, EPoint P, BigNumber x1, BigNumber y1) {
 	// TODO: Перевод в бинарную строку
 	// Почему-то обрубается первый бит
 
@@ -497,31 +491,31 @@ BigNumber* miller(int n, EPoint P, BigNumber x1, BigNumber y1) {
 	memcpy(&T, &P, sizeof(EPoint));
 	BigNumber f(1);
 	for (int i = 0; i < n; i++) {
-		f = f * (f * (*g(T, T, x1, y1)));
+		f = f * (f * g(T, T, x1, y1));
 		T = *(T.mul(BigNumber(2), T));
 		if (m[i] == '1') {
-			f = f * (*g(T, P, x1, y1));
+			f = f * g(T, P, x1, y1);
 			T = *(T.add(T, P));
 		}
 		int qq = 1;
 	}
-	return &f;
+	return f;
 }
 
-BigNumber* evalMiller(EPoint P, EPoint Q) {
-	BigNumber* res = miller(6, P, Q.x, Q.y);
+BigNumber evalMiller(EPoint P, EPoint Q) {
+	BigNumber res = miller(6, P, Q.x, Q.y);
 	return res;
 }
 
-BigNumber* weilPairing(EPoint P, EPoint Q, EPoint S) {
+BigNumber weilPairing(EPoint P, EPoint Q, EPoint S) {
 
 	//int num = eval_miller(P, Q + S) / eval_miller(P, S);
 	//int den = eval_miller(Q, P - S) / eval_miller(Q, -S)
 	//return (num / den)
 
-	BigNumber num = (*(evalMiller(P, *Q.add(Q, S))) / *(evalMiller(P, S)));
-	BigNumber den = (*(evalMiller(Q, *P.sub(P, S))) / *(evalMiller(Q, *S.sub(EPoint(BigNumber(0), BigNumber(0)) , S))));
-	return &(num / den);
+	BigNumber num = ((evalMiller(P, *Q.add(Q, S))) / (evalMiller(P, S)));
+	BigNumber den = ((evalMiller(Q, *P.sub(P, S))) / (evalMiller(Q, *S.sub(EPoint(BigNumber(0), BigNumber(0)) , S))));
+	return (num / den);
 }
 
 bool prime(long long n)
