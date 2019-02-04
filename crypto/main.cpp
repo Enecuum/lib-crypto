@@ -16,7 +16,6 @@
 #include <openssl/obj_mac.h>
 #include <openssl/ec.h>
 #include <openssl/sha.h>
-#include "main.h"
 //#pragma comment(lib,"libcrypto.lib")
 using namespace std;
 struct eccrypt_curve_t curve;
@@ -172,7 +171,7 @@ class EPoint {
 			// get -b
 			//EPoint *reverse = mul(BigNumber(-1), b);
 
-			// P * -1 = размер поля минус Py ???
+			// P * -1 = СЂР°Р·РјРµСЂ РїРѕР»СЏ РјРёРЅСѓСЃ Py ???
 			eccrypt_point_t ac = a.convert(a);
 			eccrypt_point_t bc = b.convert(b);
 			//ac.is_inf = 1;
@@ -238,7 +237,7 @@ EPoint keyRecovery(vector<EPoint> proj, int* coalition, int q) {
 		buff = *(proj.at(i).mul(BigNumber(lambda), proj.at(i)));
 		buff.setCurve(&curve);
 
-		// Ну потому что точка 0.0 это не настоящий прям ноль, поэтому костылек
+		// РќСѓ РїРѕС‚РѕРјСѓ С‡С‚Рѕ С‚РѕС‡РєР° 0.0 СЌС‚Рѕ РЅРµ РЅР°СЃС‚РѕСЏС‰РёР№ РїСЂСЏРј РЅРѕР»СЊ, РїРѕСЌС‚РѕРјСѓ РєРѕСЃС‚С‹Р»РµРє
 		if (i == 0) {
 			memcpy(&secret, &buff, sizeof(EPoint));
 			//eccrypt_point_cpy(&secret, &secBuf);
@@ -288,7 +287,7 @@ vector<int> shamir(int secretM, int participantN, int sufficientK)
 		}
 		arrayK.insert(arrayK.end(), (temp + secretM) % primeP);
 	}
-	//cout << "threshold scheme: (" << sufficientK << ", " << participantN << ")" << endl; //пороговая схема
+	//cout << "threshold scheme: (" << sufficientK << ", " << participantN << ")" << endl; //РїРѕСЂРѕРіРѕРІР°СЏ СЃС…РµРјР°
 	//cout << "prime number: " << primeP << ", the degree of the polynomial: " << power << endl;
 	//for (int i = 0; i<participantN; i++)
 		//cout << i + 1 << " participant. personal secret: " << arrayK[i] << endl;
@@ -336,10 +335,10 @@ int main(int argc, char ** argv)
 
 	if (NULL == (curve1 = EC_GROUP_new_by_curve_name(NID_secp224r1)))
 		std::cout << "error" << "\r\n";
-	/* инициализируем параметры кривой */
+	/* РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РїР°СЂР°РјРµС‚СЂС‹ РєСЂРёРІРѕР№ */
 
-	// Точка-генератор пока задаается вручную
-	// Надо считать порядок кривой по Шуфу
+	// РўРѕС‡РєР°-РіРµРЅРµСЂР°С‚РѕСЂ РїРѕРєР° Р·Р°РґР°Р°РµС‚СЃСЏ РІСЂСѓС‡РЅСѓСЋ
+	// РќР°РґРѕ СЃС‡РёС‚Р°С‚СЊ РїРѕСЂСЏРґРѕРє РєСЂРёРІРѕР№ РїРѕ РЁСѓС„Сѓ
 
 	bignum_fromhex(curve.a, a, ECCRYPT_BIGNUM_DIGITS);
 	bignum_fromhex(curve.b, b, ECCRYPT_BIGNUM_DIGITS);
@@ -348,7 +347,7 @@ int main(int argc, char ** argv)
 	bignum_fromhex(curve.g.y, gy, ECCRYPT_BIGNUM_DIGITS);
 	curve.g.is_inf = 0;
 
-	// Точка P - генератор порядка 91 (G0, gens[0])
+	// РўРѕС‡РєР° P - РіРµРЅРµСЂР°С‚РѕСЂ РїРѕСЂСЏРґРєР° 91 (G0, gens[0])
 	// (972, 795)
 
 	BigNumber* k = new BigNumber(10);
@@ -363,14 +362,14 @@ int main(int argc, char ** argv)
 	std::cout << mpk->x.toString() << " " << mpk->y.toString() << "\r\n";
 
 	std::cout << "\r\n      PKG keys generation \r\n";
-	// Вычисляем публичный ключ на этот сеанс
-	// Второй? генератор G (gens[1], 1158, 92)
-	// Соучайный элемент из поля q = 13 (поля порядка gens[1])
+	// Р’С‹С‡РёСЃР»СЏРµРј РїСѓР±Р»РёС‡РЅС‹Р№ РєР»СЋС‡ РЅР° СЌС‚РѕС‚ СЃРµР°РЅСЃ
+	// Р’С‚РѕСЂРѕР№? РіРµРЅРµСЂР°С‚РѕСЂ G (gens[1], 1158, 92)
+	// РЎРѕСѓС‡Р°Р№РЅС‹Р№ СЌР»РµРјРµРЅС‚ РёР· РїРѕР»СЏ q = 13 (РїРѕР»СЏ РїРѕСЂСЏРґРєР° gens[1])
 	
 	// TODO: set_random_seed(LPoSID + KblockID)
 	int KblockID = 123;
 	int LPoSID = 677321;
-	// r следует брать соучайно r = ZZ.random_element(q)
+	// r СЃР»РµРґСѓРµС‚ Р±СЂР°С‚СЊ СЃРѕСѓС‡Р°Р№РЅРѕ r = ZZ.random_element(q)
 	BigNumber* r = new BigNumber(9);
 	EPoint *Q;
 	EPoint *G = new EPoint(BigNumber("486"), BigNumber("5c"));
@@ -382,7 +381,7 @@ int main(int argc, char ** argv)
 	std::cout << Q->x.toString() << " " << Q->y.toString() << "\r\n";
 
 	//
-	// Сборка ключа
+	// РЎР±РѕСЂРєР° РєР»СЋС‡Р°
 	//
 
 	std::cout << "Key sharing: " << "\r\n";
@@ -404,13 +403,13 @@ int main(int argc, char ** argv)
 	EPoint secret = keyRecovery(proj, coalition, 13);
 	std::cout << secret.x.toString() << " " << secret.y.toString() << "\r\n";
 
-	// Проверка полученного секрета
+	// РџСЂРѕРІРµСЂРєР° РїРѕР»СѓС‡РµРЅРЅРѕРіРѕ СЃРµРєСЂРµС‚Р°
 	std::cout << "Check: SK = MSK * Q " << "\r\n";
 	EPoint *check = Q->mul(*k, *Q);
 	std::cout << check->x.toString() << " " << check->y.toString() << "\r\n";
 
 	//
-	//	Постановка подписи
+	//	РџРѕСЃС‚Р°РЅРѕРІРєР° РїРѕРґРїРёСЃРё
 	//
 
 	std::cout << "\r\n      Create signature" << "\r\n";
@@ -425,7 +424,7 @@ int main(int argc, char ** argv)
 	
 	// set_random_seed(LPoSID+M)
 	// H = E.random_point()
-	// Тут хеширование, но пока берется "случайная" точка кривой
+	// РўСѓС‚ С…РµС€РёСЂРѕРІР°РЅРёРµ, РЅРѕ РїРѕРєР° Р±РµСЂРµС‚СЃСЏ "СЃР»СѓС‡Р°Р№РЅР°СЏ" С‚РѕС‡РєР° РєСЂРёРІРѕР№
 	
 	EPoint* H = new EPoint(681, 256);
 	H->setCurve(&curve);
@@ -439,7 +438,7 @@ int main(int argc, char ** argv)
 	
 	std::cout << "      Verification" << "\r\n";
 	std::cout << "Weil pairing" << "\r\n";
-	// Спаривания...
+	// РЎРїР°СЂРёРІР°РЅРёСЏ...
 	
 	EPoint *S = new EPoint(BigNumber(0), BigNumber(522));
 	S->setCurve(&curve);
@@ -484,8 +483,8 @@ BigNumber* g(EPoint P, EPoint Q, BigNumber x1, BigNumber y1) {
 }
 
 BigNumber* miller(int n, EPoint P, BigNumber x1, BigNumber y1) {
-	// TODO: Перевод в бинарную строку
-	// Почему-то обрубается первый бит
+	// TODO: РџРµСЂРµРІРѕРґ РІ Р±РёРЅР°СЂРЅСѓСЋ СЃС‚СЂРѕРєСѓ
+	// РџРѕС‡РµРјСѓ-С‚Рѕ РѕР±СЂСѓР±Р°РµС‚СЃСЏ РїРµСЂРІС‹Р№ Р±РёС‚
 
 	char m[] = "011011";
 

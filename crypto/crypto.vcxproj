@@ -117,7 +117,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bignum.cpp" />
-    <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="eccrypt.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -125,7 +124,6 @@
     <ClInclude Include="bignum.h" />
     <ClInclude Include="eccrypt.h" />
     <ClInclude Include="ec_conf.h" />
-    <ClInclude Include="main.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
