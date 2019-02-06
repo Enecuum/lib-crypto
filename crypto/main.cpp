@@ -19,16 +19,16 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bio.h>
+#include "BigNumber.h"
 //#pragma comment(lib,"libcrypto.lib")
 using namespace std;
+
 struct eccrypt_curve_t curve;
 int cntr = 0;
 BN_CTX *ctx;
 
 /* Set up the BN_CTX */
-
-
-
+/*
 class BigNumber {
 public:
 	BigNumber() {
@@ -325,7 +325,7 @@ void getHash() {
 	printf("\n");
 }
 
-
+*/
 void printBN(char* desc, BIGNUM * bn);
 void handleErrors()
 {
@@ -350,10 +350,14 @@ EC_GROUP *create_curve(void)
 	{ 0x04, 0xC7 };
 	unsigned char order_bin[2] =
 	{ 0x04, 0x9F };
+
+	// G = (1158, 92)
 	//unsigned char x_bin[2] =
 	//{ 0x04, 0x86 };
 	//unsigned char y_bin[1] =
 	//{ 0x5C };
+
+	// G0 = (972, 795)
 	unsigned char x_bin[2] =
 	{ 0x03, 0xCC };
 	unsigned char y_bin[2] =
@@ -479,64 +483,35 @@ int main(int argc, char ** argv)
 	
 	if (1 != EC_GROUP_check(curve1, NULL)) handleErrors();
 	// OpenSSL curve test
-	unsigned char hex_key[] = {0x0A};
-	BIGNUM *bn_key;
+	BigNumber msk(9);
+	printBN("bn_key: ", msk.bn);
 
-	if (NULL == (bn_key = BN_bin2bn(hex_key, 1, NULL))) handleErrors();
-	printBN("bn_key: ", bn_key);
-
-
-	EC_KEY *key = NULL; // EC_KEY_new();
-
-
-	//if (1 != EC_KEY_set_group(key, curve1)) handleErrors();
-	key = create_private_key(bn_key, curve1);
-
-	//if (NULL == (curve2 = EC_GROUP_new_by_curve_name(NID_secp224r1)))
-		//handleErrors();
-
-	//if (NULL == (key = EC_KEY_new_by_curve_name(NID_secp224r1)))
-		//handleErrors();
-	//BIGNUM *prv = NULL;
-	//EC_POINT *pub = EC_POINT_new(curve1);
-
-	BIGNUM *px, *py;
-	EC_POINT *rand = EC_POINT_new(curve1);
-	//if (NULL == (rand = EC_POINT_new(curve1))) handleErrors();
-	//= EC_POINT_new(curve1);
-	//EC_POINT_free(rand);
-	//EC_POINT_get_random(curve1, rand, ctx);
-	unsigned char px_bin[2] =
-	{ 0x03, 0xCC };
-	unsigned char py_bin[2] =
-	{ 0x03, 0x1B };
-	if (NULL == (px = BN_bin2bn(px_bin, 2, NULL))) handleErrors();
-	if (NULL == (py = BN_bin2bn(py_bin, 2, NULL))) handleErrors();
+	// Chech Q = rG
+	BigNumber gx(1158);
+	BigNumber gy(92);
+	unsigned char b_bin[2] =
+	{ 0x03, 0xD2 };
 	
+	BigNumber test(b_bin, 2);
+	std::cout << "(" << test.decimal() << " : " << test.decimal() << ")" << endl;
+	EC_POINT *Q = EC_POINT_new(curve1);
+
 	//if (NULL == (rand = EC_POINT_new(curve1))) handleErrors();
-	if (NULL == (EC_POINT_is_on_curve(curve1, rand, ctx))) handleErrors();
+	//if (NULL == (EC_POINT_is_on_curve(curve1, rand, ctx))) handleErrors();
+	if (NULL == (EC_POINT_is_on_curve(curve1, Q, ctx))) handleErrors();
+
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, Q, gx.bn, gy.bn, NULL)) handleErrors();
+	std::cout << "Q before mul" << endl;
+	std::cout << "(" << gx.decimal() << " : " << gy.decimal() << ")" << endl;
 	
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, rand, px, py, NULL)) handleErrors();
-
-	if (1 != EC_POINT_mul(curve1, rand, bn_key, NULL, NULL, NULL)) handleErrors();
-
-	if (1 != EC_KEY_set_public_key(key, rand)) handleErrors();
-
-	EC_POINT *mpk = (EC_POINT*)EC_KEY_get0_public_key(key);
-
-	BIGNUM *x = BN_new();
-	BIGNUM *y = BN_new();
+	if (1 != EC_POINT_mul(curve1, Q, NULL, Q, msk.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve1, Q, gx.bn, gx.bn, NULL)) handleErrors();
+	std::cout << "Q = r * G" << endl;
+	std::cout << "(" << gx.decimal() << " : " << gy.decimal() << ")" << endl;
 
 
-	if (!EC_POINT_get_affine_coordinates_GFp(curve1, mpk, x, y, NULL)) handleErrors();
-	fprintf(stdout, "\nRandom Elliptic Curve Point P:\n     x = 0x");
-	BN_print_fp(stdout, x);
-	fprintf(stdout, "\n     y = 0x");
-	BN_print_fp(stdout, y);
-	fprintf(stdout, "\n");
-	//char *ch = ecies_key_private_get_hex(key);
-
-
+	BigNumber a(2);
+	BigNumber b(3);
 	//if (1 != EC_KEY_set_group(myecc, curve1)) handleErrors();
 	//if (1 != EC_KEY_generate_key(myecc)) handleErrors();
 
@@ -545,14 +520,12 @@ int main(int argc, char ** argv)
 	//check = ecies_key_private_get_hex(myecc);
 	/* инициализируем параметры кривой */
 	BN_CTX_free(ctx);
-	EC_POINT_free(rand);
-	BN_free(y);
-	BN_free(x);
-	EC_POINT_free(mpk);
+
+
 	
 //	BN_free(gx);
 //	BN_free(gy);
-	BN_free(bn_key);
+	//BN_free(bn_key);
 	int eee = 1;
 	// Точка-генератор пока задаается вручную
 	// Надо считать порядок кривой по Шуфу
@@ -676,7 +649,7 @@ int main(int argc, char ** argv)
 	system("pause");
 	return 0;
 }
-
+/*
 BigNumber g(EPoint P, EPoint Q, const BigNumber &x1, const BigNumber &y1) {
 	BigNumber a(a);
 	BigNumber slope;
@@ -733,3 +706,5 @@ bool prime(long long n)
 			return false;
 	return true;
 }
+
+*/

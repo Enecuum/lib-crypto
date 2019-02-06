@@ -118,11 +118,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bignum.cpp" />
+    <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="eccrypt.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bignum.h" />
+    <ClInclude Include="BigNumber.h" />
     <ClInclude Include="eccrypt.h" />
     <ClInclude Include="ec_conf.h" />
   </ItemGroup>
