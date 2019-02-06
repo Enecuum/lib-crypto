@@ -4,7 +4,7 @@ class BigNumber
 {
 public:
 	BigNumber();
-	BigNumber(BIGNUM * x, BIGNUM * y);
+	BigNumber(BIGNUM * x);
 	BigNumber(unsigned char * x, int size);
 	BigNumber(int x);
 	~BigNumber();
@@ -14,6 +14,4 @@ public:
 	BIGNUM* bn;
 private:
 	int dec;
-	
 };
-

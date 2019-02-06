@@ -326,6 +326,61 @@ void getHash() {
 }
 
 */
+
+BigNumber operator + (BigNumber a, BigNumber b)
+{
+	BIGNUM *r = BN_new();
+	if (!BN_add(r, a.bn, b.bn))
+		return NULL;
+	return BigNumber(r);
+}
+
+BigNumber operator - (BigNumber a, BigNumber b)
+{
+	BIGNUM *r = BN_new();
+	if (!BN_sub(r, a.bn, b.bn))
+		return NULL;
+	return BigNumber(r);
+}
+
+BigNumber operator * (BigNumber a, BigNumber b)
+{
+	BIGNUM *r = BN_new();
+	BN_CTX *ctx1;
+	if (ctx1 = BN_CTX_new())
+	if (BN_mul(r, a.bn, b.bn, ctx1)) {
+		BN_CTX_free(ctx1);
+		return BigNumber(r);
+	}
+	BN_CTX_free(ctx1);
+	return NULL;
+}
+
+BigNumber operator / (BigNumber a, BigNumber b)
+{
+	BIGNUM *r = BN_new();
+	if (!BN_div(r, NULL, a.bn, b.bn, ctx))
+		return NULL;
+	return BigNumber(r);
+}
+
+BigNumber operator % (BigNumber a, BigNumber b)
+{
+	BIGNUM *r = BN_new();
+	if (!BN_div(NULL, r, a.bn, b.bn, ctx))
+		return NULL;
+	return BigNumber(r);
+}
+
+int operator == (BigNumber a, BigNumber b)
+{
+	int res = BN_cmp(a.bn, b.bn);
+	if (res == 0)
+		return 1;
+	else
+		return 0;
+}
+
 void printBN(char* desc, BIGNUM * bn);
 void handleErrors()
 {
@@ -489,11 +544,7 @@ int main(int argc, char ** argv)
 	// Chech Q = rG
 	BigNumber gx(1158);
 	BigNumber gy(92);
-	unsigned char b_bin[2] =
-	{ 0x03, 0xD2 };
-	
-	BigNumber test(b_bin, 2);
-	std::cout << "(" << test.decimal() << " : " << test.decimal() << ")" << endl;
+
 	EC_POINT *Q = EC_POINT_new(curve1);
 
 	//if (NULL == (rand = EC_POINT_new(curve1))) handleErrors();
@@ -510,8 +561,14 @@ int main(int argc, char ** argv)
 	std::cout << "(" << gx.decimal() << " : " << gy.decimal() << ")" << endl;
 
 
-	BigNumber a(2);
+	BigNumber a(6);
 	BigNumber b(3);
+	std::cout << "a + b = " << (a + b).decimal() << endl;
+	std::cout << "a - b = " << (a - b).decimal() << endl;
+	std::cout << "a * b = " << (a * b).decimal() << endl;
+	std::cout << "a / b = " << (a / b).decimal() << endl;
+	std::cout << "a % b = " << (a % b).decimal() << endl;
+	std::cout << "a == b = " << (a == b) << endl;
 	//if (1 != EC_KEY_set_group(myecc, curve1)) handleErrors();
 	//if (1 != EC_KEY_generate_key(myecc)) handleErrors();
 

@@ -9,9 +9,10 @@ BigNumber::BigNumber() {
 	this->bn = BN_new();
 }
 
-BigNumber::BigNumber(BIGNUM * x, BIGNUM * y){
-
+BigNumber::BigNumber(BIGNUM * x){
+	this->bn = x;
 }
+
 BigNumber::BigNumber(unsigned char * x, int size) {
 	
 	//BIGNUM *bn = NULL;
@@ -25,8 +26,6 @@ BigNumber::BigNumber(int number) {
 		buf[3 - i] = (number >> (i * 8));
 	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
 }
-
-
 
 BigNumber::~BigNumber(){
 	BN_free(bn);
@@ -43,6 +42,3 @@ int BigNumber::decimal() {
 BIGNUM* BigNumber::getBn() {
 	return this->bn;
 }
-
-
-
