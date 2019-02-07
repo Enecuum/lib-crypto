@@ -9,11 +9,7 @@ public:
 	BigNumber(unsigned char * x, int size);
 	BigNumber(int x);
 	~BigNumber();
-	void print();
 	int decimal();
-	BIGNUM* getBn();
 	BIGNUM* bn;
 	long dec;
-
-	
 };

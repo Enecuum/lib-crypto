@@ -39,14 +39,7 @@ BigNumber::~BigNumber(){
 	//BN_free(bn);
 }
 
-void BigNumber::print() {
-
-
-}
 int BigNumber::decimal() {
 	long x = strtol(BN_bn2hex(bn), NULL, 16);
 	return x;
-}
-BIGNUM* BigNumber::getBn() {
-	return this->bn;
 }
