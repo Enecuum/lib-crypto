@@ -4,6 +4,7 @@ class BigNumber
 {
 public:
 	BigNumber();
+	BigNumber(const BigNumber& bn);
 	BigNumber(BIGNUM * x);
 	BigNumber(unsigned char * x, int size);
 	BigNumber(int x);
@@ -12,6 +13,7 @@ public:
 	int decimal();
 	BIGNUM* getBn();
 	BIGNUM* bn;
-private:
-	int dec;
+	long dec;
+
+	
 };

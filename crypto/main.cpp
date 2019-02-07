@@ -4,8 +4,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "eccrypt.h"
-#include "bignum.h"
 #include "ec_conf.h"
 #include <vector>
 #include <array>
@@ -21,11 +19,12 @@
 //#pragma comment(lib,"libcrypto.lib")
 using namespace std;
 
-struct eccrypt_curve_t curve;
 int cntr = 0;
 BN_CTX *ctx;
 
+BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve);
 EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve);
+
 bool prime(long long n);
 void handleErrors();
 /* Set up the BN_CTX */
@@ -162,7 +161,7 @@ class EPoint {
 BigNumber operator + (BigNumber a, BigNumber b)
 {
 	BIGNUM *r = BN_new();
-	if (!BN_add(r, a.bn, b.bn))
+	if (!BN_mod_add(r, a.bn, b.bn, BigNumber(1223).bn, ctx))
 		return NULL;
 	return BigNumber(r);
 }
@@ -170,7 +169,7 @@ BigNumber operator + (BigNumber a, BigNumber b)
 BigNumber operator - (BigNumber a, BigNumber b)
 {
 	BIGNUM *r = BN_new();
-	if (!BN_sub(r, a.bn, b.bn))
+	if (!BN_mod_sub(r, a.bn, b.bn, BigNumber(1223).bn, ctx))
 		return NULL;
 	return BigNumber(r);
 }
@@ -180,7 +179,7 @@ BigNumber operator * (BigNumber a, BigNumber b)
 	BIGNUM *r = BN_new();
 	BN_CTX *ctx1;
 	if (ctx1 = BN_CTX_new())
-		if (BN_mul(r, a.bn, b.bn, ctx1)) {
+		if (BN_mod_mul(r, a.bn, b.bn, BigNumber(1223).bn, ctx)) {
 			BN_CTX_free(ctx1);
 			return BigNumber(r);
 		}
@@ -190,15 +189,19 @@ BigNumber operator * (BigNumber a, BigNumber b)
 
 BigNumber operator / (BigNumber a, BigNumber b)
 {
+	BigNumber res;
 	BIGNUM *r = BN_new();
 	BN_CTX *ctx1;
 	if (ctx1 = BN_CTX_new())
-		if (!BN_div(r, NULL, a.bn, b.bn, ctx)){
-			BN_CTX_free(ctx1);
-		return BigNumber(r);
+		if (BN_mod_inverse(r, b.bn, BigNumber(1223).bn, ctx1)){
+				if (BN_mod_mul(r, r, a.bn, BigNumber(1223).bn, ctx)) {
+					BN_CTX_free(ctx1);
+					return BigNumber(r);
+				}
+			//}
 		}
 	BN_CTX_free(ctx1);
-return NULL;
+	return NULL;
 }
 
 BigNumber operator % (BigNumber a, BigNumber b)
@@ -206,7 +209,7 @@ BigNumber operator % (BigNumber a, BigNumber b)
 	BIGNUM *r = BN_new();
 	BN_CTX *ctx1;
 	if (ctx1 = BN_CTX_new())
-		if (!BN_div(NULL, r, a.bn, b.bn, ctx)){
+		if (BN_div(NULL, r, a.bn, b.bn, ctx)){
 				BN_CTX_free(ctx1);
 			return BigNumber(r);
 		}
@@ -431,14 +434,11 @@ int main(int argc, char ** argv)
 	std::cout << "Random r: " << r.decimal() << endl;
 
 	EC_POINT *Q = mul(r, G, curve1);
-	//if (!EC_POINT_get_affine_coordinates_GFp(curve1, Q, gx.bn, gy.bn, NULL)) handleErrors();
 	std::cout << "Q = r * G: ";
 	printPoint(Q, curve1);
 	
 	std::cout << "Key sharing: " << endl;
-
 	vector<int> shares = shamir(msk.decimal(), 10, 6);
-
 	for (int i = 0; i < shares.size(); i++)
 		std::cout << "(" << shares[i] << "), ";
 	
@@ -487,6 +487,26 @@ int main(int argc, char ** argv)
 	std::cout << "S2: ";
 	printPoint(s2, curve1);
 
+	std::cout << "      Verification" << "\r\n";
+	std::cout << "Weil pairing" << "\r\n";
+
+	BigNumber sx(0);
+	BigNumber sy(522);
+	EC_POINT *S = EC_POINT_new(curve1);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, S, sx.bn, sy.bn, NULL)) handleErrors();
+
+	BigNumber r1 = weilPairing(G0, s2, S, curve1);
+	std::cout << "r1 = e(P, S)\t" << r1.decimal() << "\r\n";
+
+	BigNumber b1 = weilPairing(MPK, Q, S, curve1);
+	std::cout << "b1 = e(MPK, Q)\t" << b1.decimal() << "\r\n";
+
+	BigNumber c1 = weilPairing(s1, H, S, curve1);
+	std::cout << "c1 = e(R, H1)\t" << c1.decimal() << "\r\n";
+
+	BigNumber b1c1 = b1 * c1;
+	std::cout << "r1 = b1 * c1\t" << b1c1.decimal() << "\r\n";
+
 	BN_CTX_free(ctx);
 	EC_POINT_free(secret);
 	EC_POINT_free(Q);
@@ -499,81 +519,101 @@ int main(int argc, char ** argv)
 	EC_POINT_free(H);
 	EC_GROUP_free(curve1);
 
-/*
+//	cout << "copies: " << cntr << endl;
 
-	std::cout << "      Verification" << "\r\n";
-	std::cout << "Weil pairing" << "\r\n";
-	// Спаривания...
-
-	EPoint *S = new EPoint(BigNumber(0), BigNumber(522));
-	S->setCurve(&curve);
-	s2.setCurve(&curve);
-	BigNumber r1 = weilPairing(g0, s2, *S);
-	std::cout << "r1 = e(P, S)\t" << r1.toString() << "\r\n";
-
-	BigNumber b1 = weilPairing(mpk, Q, *S);
-	std::cout << "b1 = e(MPK, Q)\t" << b1.toString() << "\r\n";
-
-	BigNumber c1 = weilPairing(s1, H, *S);
-	std::cout << "c1 = e(R, H1)\t" << c1.toString() << "\r\n";
-
-	BigNumber b1c1 = b1 * c1;
-	std::cout << "r1 = b1 * c1\t" << b1c1.toString() << "\r\n";
-	cout << "copies: " << cntr << endl;
-	*/
 	system("pause");
 	return 0;
 }
-/*
-BigNumber g(EPoint P, EPoint Q, const BigNumber &x1, const BigNumber &y1) {
-	BigNumber a(a);
+
+BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, EC_GROUP *curve) {
+	BigNumber px;
+	BigNumber py;
+	if (!EC_POINT_get_affine_coordinates_GFp(curve, P, px.bn, py.bn, NULL)) handleErrors();
+	px.dec = px.decimal();
+	py.dec = py.decimal();
+	BigNumber qx;
+	BigNumber qy;
+	if (!EC_POINT_get_affine_coordinates_GFp(curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	qx.dec = qx.decimal();
+	qy.dec = qy.decimal();
+	BigNumber a(25);
 	BigNumber slope;
-	if ((P.x == Q.x) && ((P.y + Q.y) == 0)) {
-		return (x1 - P.x);
+
+	if ((px == qx) && ((py + qy) == 0)) {
+		return (x1 - px);
 	}
-	if (((P.x == Q.x) && (P.y == Q.y))) {
-		slope = (BigNumber(3) * (P.x * P.x) + a) / (P.y + P.y);
+	if (((px == qx) && (py == qy))) {
+		slope = (BigNumber(3) * (px * px) + a) / (py + py);
 	}
 	else {
-		slope = (P.y - Q.y) / (P.x - Q.x);
+
+		slope = (py - qy) / (px - qx);
 	}
-	return (y1 - P.y - (slope * (x1 - P.x))) / (x1 + P.x + Q.x - (slope * slope));
+	return (y1 - py - (slope * (x1 - px))) / (x1 + px + qx - (slope * slope));
 }
 
-BigNumber miller(string m, EPoint P, BigNumber x1, BigNumber y1) {
-	EPoint T = P;
+BigNumber miller(string m, EC_POINT *P, BigNumber x1, BigNumber y1, EC_GROUP *curve) {
+	EC_POINT *T = EC_POINT_new(curve);
+	if (1 != EC_POINT_copy( T, P)) handleErrors();
+	
 	BigNumber f(1);
+
 	for (int i = 0; i < m.size(); i++) {
-		f = f * (f * g(T, T, x1, y1));
-		T = (T.mul(BigNumber(2), T));
+		f = f * (f * g(T, T, x1, y1, curve));
+		//cout << "i: " << i << " f: " << g(T, T, x1, y1, curve).decimal() << endl;
+		//T = T + T;
+		if (1 != EC_POINT_dbl(curve, T, T, NULL)) handleErrors();
 		if (m[i] == '1') {
-			f = f * g(T, P, x1, y1);
-			T = (T.add(T, P));
+			f = f * g(T, P, x1, y1, curve);
+			//T = T + P;
+			if (1 != EC_POINT_add(curve, T, T, P, NULL)) handleErrors();
 		}
+		
 		int qq = 1;
 	}
+	
+	EC_POINT_free(T);
 	return f;
 }
 
-BigNumber evalMiller(EPoint P, EPoint Q) {
+BigNumber evalMiller(EC_POINT *P, EC_POINT *Q, EC_GROUP *curve) {
 	// Порядок подгруппы G0 в двоичном представлении без первого бита (???)
 	// TODO: Перевод в бинарную строку
 	string m = "011011";
-	BigNumber res = miller(m, P, Q.x, Q.y);
+	BigNumber x;
+	BigNumber y;
+	if (!EC_POINT_get_affine_coordinates_GFp(curve, Q, x.bn, y.bn, NULL)) handleErrors();
+	BigNumber res = miller(m, P, x, y, curve);
+
 	return res;
 }
 
-BigNumber weilPairing(EPoint P, EPoint Q, EPoint S) {
+BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve) {
 
 	//int num = eval_miller(P, Q + S) / eval_miller(P, S);
 	//int den = eval_miller(Q, P - S) / eval_miller(Q, -S)
 	//return (num / den)
+	EC_POINT *QS = EC_POINT_new(curve);
+	// QS = Q + S
+	if (1 != EC_POINT_add(curve, QS, Q, S, NULL)) handleErrors();
+	EC_POINT *invS = EC_POINT_new(curve);
+	// invS = -S
+	if (1 != EC_POINT_copy(invS, S)) handleErrors();
+	if (1 != EC_POINT_invert(curve, invS, NULL)) handleErrors();
+	EC_POINT *PS = EC_POINT_new(curve);
+	// PS = P - S = P + (-S)
+	if (1 != EC_POINT_add(curve, PS, P, invS, NULL)) handleErrors();
 
-	BigNumber num = ((evalMiller(P, Q.add(Q, S))) / (evalMiller(P, S)));
-	BigNumber den = ((evalMiller(Q, P.sub(P, S))) / (evalMiller(Q, S.sub(EPoint(BigNumber(0), BigNumber(0)), S))));
+	//cout << "num " << num.decimal() << endl;
+	BigNumber num = evalMiller(P, QS, curve) / evalMiller(P, S, curve);
+	
+	BigNumber den = evalMiller(Q, PS, curve) / evalMiller(Q, invS, curve);
+	EC_POINT_free(QS);
+	EC_POINT_free(invS);
+	EC_POINT_free(PS);
 	return (num / den);
 }
-*/
+
 bool prime(long long n)
 {
 	for (long long i = 2; i <= sqrt(n); i++)
