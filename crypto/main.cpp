@@ -17,8 +17,6 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <openssl/obj_mac.h>
-#include <openssl/bio.h>
 #include "BigNumber.h"
 //#pragma comment(lib,"libcrypto.lib")
 using namespace std;
@@ -27,194 +25,10 @@ struct eccrypt_curve_t curve;
 int cntr = 0;
 BN_CTX *ctx;
 
+EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve);
+bool prime(long long n);
+void handleErrors();
 /* Set up the BN_CTX */
-/*
-class BigNumber {
-public:
-	BigNumber() {
-
-	}
-	BigNumber(const BigNumber &bn) 
-	{
-		memcpy(rslt, bn.rslt, sizeof(bignum_digit_t[BIGNUM_MAX_DIGITS]));;
-		cntr++;
-	}
-	BigNumber(int number) {
-		this->numberDec = number;
-		//bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		char buf[65];
-		_itoa(number, buf, 16);
-		bignum_fromhex(rslt, buf, BIGNUM_MAX_DIGITS);
-	}
-	BigNumber(char* number) {
-		//this->numberDec = number;
-		//bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		//char buf[65];
-		//_itoa(number, buf, 16);
-		bignum_fromhex(rslt, number, BIGNUM_MAX_DIGITS);
-	}
-	BigNumber(string number) {
-		//this->numberDec = number;
-		//bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		//char buf[65];
-		//_itoa(number, buf, 16);
-		bignum_fromhex(rslt, &number[0], BIGNUM_MAX_DIGITS);
-	}
-
-	BigNumber(bignum_digit_t number[BIGNUM_MAX_DIGITS]) {
-		memcpy(rslt, number, sizeof(bignum_digit_t[BIGNUM_MAX_DIGITS]));
-		//*rslt = *number;
-	}
-	int dec() {
-		return this->numberDec;
-	}
-	bignum_digit_t* hex() {
-		return rslt;
-	}
-	string toString() {
-		char buff[ECCRYPT_BIGNUM_DIGITS];
-		bignum_tohex(rslt, buff, sizeof(buff), ECCRYPT_BIGNUM_DIGITS);
-		string str = string(buff);
-		return str;
-	}
-	char* toChar() {
-		char buff[ECCRYPT_BIGNUM_DIGITS];
-		bignum_tohex(rslt, buff, sizeof(buff), ECCRYPT_BIGNUM_DIGITS);
-		return buff;
-	}
-
-private:
-	bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-	int numberDec;
-};
-
-BigNumber operator + (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-	bignum_madd(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
-	return BigNumber(res);
-}
-
-BigNumber operator - (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-	bignum_msub(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
-	return BigNumber(res);
-}
-
-BigNumber operator / (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-	bignum_mdiv(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
-	return BigNumber(res);
-}
-
-BigNumber operator % (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	bignum_digit_t *r = c1.hex();
-	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-	bignum_div(res, c2.hex(), curve.m, r, ECCRYPT_BIGNUM_DIGITS);
-	return BigNumber(r);
-}
-
-BigNumber operator * (BigNumber c1, BigNumber c2)
-{
-	bignum_digit_t *res = c1.hex();
-	memcpy(res, c1.hex(), sizeof(bignum_digit_t));
-	bignum_mmul(res, c2.hex(), curve.m, ECCRYPT_BIGNUM_DIGITS);
-	return BigNumber(res);
-}
-
-int operator == (BigNumber c1, BigNumber c2)
-{
-	int res = bignum_cmp(c1.hex(), c2.hex(), ECCRYPT_BIGNUM_DIGITS);
-	if (res == 0)
-		return 1;
-	else
-		return 0;
-}
-
-class EPoint {
-public:
-	EPoint() {
-		this->curve = curve;
-	}
-	EPoint(BigNumber x, BigNumber y) {
-		this->x = x;
-		this->y = y;
-		this->curve = curve;
-		is_inf = bignum_iszero(x.hex(), ECCRYPT_BIGNUM_DIGITS) &&
-			bignum_iszero(y.hex(), ECCRYPT_BIGNUM_DIGITS);
-	}
-
-	BigNumber getOrder() {
-		return order;
-	}
-
-	bignum_digit_t* toDigit(BigNumber b) {
-		return b.hex();
-	}
-
-	EPoint convert(eccrypt_point_t p) {
-		BigNumber x(*p.x);
-		BigNumber y(*p.y);
-		EPoint res(x, y);
-		res.curve = curve;
-		return res;
-	}
-	eccrypt_point_t convert(EPoint P) {
-		eccrypt_point_t res;
-		bignum_fromhex(res.x, &P.x.toString()[0], ECCRYPT_BIGNUM_DIGITS);
-		bignum_fromhex(res.y, &P.y.toString()[0], ECCRYPT_BIGNUM_DIGITS);
-		res.is_inf = is_inf;
-		return res;
-	}
-	EPoint mul(BigNumber n, EPoint P) {
-		eccrypt_point_t rslt;
-		eccrypt_point_t p = P.convert(P);
-		eccrypt_point_mul(&rslt, &p, n.hex(), curve);
-		return convert(rslt);
-	}
-	EPoint add(EPoint a, EPoint b) {
-		eccrypt_point_t rslt;
-		eccrypt_point_t ac = a.convert(a);
-		eccrypt_point_t bc = b.convert(b);
-		eccrypt_point_add(&rslt, &ac, &bc, curve);
-		return convert(rslt);
-	}
-	EPoint sub(EPoint a, EPoint b) {
-		eccrypt_point_t rslt;
-		//BigNumber m(-1);
-		// get -b
-		//EPoint *reverse = mul(BigNumber(-1), b);
-
-		// P * -1 = размер поля минус Py ???
-		eccrypt_point_t ac = a.convert(a);
-		eccrypt_point_t bc = b.convert(b);
-		//ac.is_inf = 1;
-		bignum_digit_t q[BIGNUM_MAX_DIGITS];// = curve->m;
-		memcpy(q, curve->m, sizeof(bignum_digit_t));
-		bignum_sub(q, bc.y, ECCRYPT_BIGNUM_DIGITS);
-		memcpy(bc.y, q, sizeof(bignum_digit_t));
-		//*bc.y = *q;
-		eccrypt_point_add(&rslt, &ac, &bc, curve);
-		return convert(rslt);
-	}
-	void setCurve(eccrypt_curve_t *curve) {
-		this->curve = curve;
-	}
-	BigNumber x, y;
-private:
-	eccrypt_curve_t *curve;
-	BigNumber order;
-	int is_inf;
-};
-
-BigNumber weilPairing(EPoint P, EPoint Q, EPoint S);
 
 int finiteDiv(int up, int down, int p, vector<int> invs) {
 	if (down < 0) {
@@ -234,13 +48,9 @@ vector<int> getInv(int m) {
 	return r;
 }
 
-EPoint keyRecovery(vector<EPoint> proj, int* coalition, int q) {
-	EPoint secret(BigNumber(0), BigNumber(0));
-	secret.setCurve(&curve);
-	//bignum_fromhex(secret.x, "0", ECCRYPT_BIGNUM_DIGITS);
-	//bignum_fromhex(secret.y, "0", ECCRYPT_BIGNUM_DIGITS);
-	//secret.is_inf = 0;
-
+EC_POINT* keyRecovery(vector<EC_POINT*> proj, int* coalition, int q, EC_GROUP *curve) {
+	EC_POINT* secret = EC_POINT_new(curve);
+	EC_POINT *buff = EC_POINT_new(curve);
 	vector<int> invs = getInv(13);
 	for (int i = 0; i < 6; i++) {
 		int lambda = 1;
@@ -251,19 +61,16 @@ EPoint keyRecovery(vector<EPoint> proj, int* coalition, int q) {
 		}
 		if (lambda == 0)
 			continue;
-		EPoint buff;// = new EPoint();
-		buff = (proj.at(i).mul(BigNumber(lambda), proj.at(i)));
-		buff.setCurve(&curve);
+		
+		buff = mul(BigNumber(lambda), proj.at(i), curve);
 
-		// Ну потому что точка 0.0 это не настоящий прям ноль, поэтому костылек
 		if (i == 0) {
-			memcpy(&secret, &buff, sizeof(EPoint));
-			//eccrypt_point_cpy(&secret, &secBuf);
+			if (!EC_POINT_copy(secret, buff)) handleErrors();
 			continue;
 		}
-		secret = (secret.add(secret, buff));
-		secret.setCurve(&curve);
+		if (!EC_POINT_add(curve, secret, secret, buff, NULL)) handleErrors();
 	}
+	EC_POINT_free(buff);
 	return secret;
 }
 
@@ -299,14 +106,12 @@ vector<int> shamir(int secretM, int participantN, int sufficientK)
 	return arrayK;
 }
 
-vector<EPoint> keyProj(int* coalition, vector<int> shares, EPoint *G) {
-	vector<EPoint> res;
+/* Get shadows of secret key (ss_i = coalition[i] * Q)*/
+vector<EC_POINT*> keyProj(int* coalition, vector<int> shares, EC_POINT *G, EC_GROUP *curve) {
+	vector<EC_POINT*> res;
 	for (int i = 0; i < 6; i++) {
 		BigNumber c(shares.at(coalition[i] - 1));
-		EPoint p = G->mul(c, *G);
-
-		p.setCurve(&curve);
-		//eccrypt_point_mul(&buff, &G, c, &curve);
+		EC_POINT *p = mul(c.bn, G, curve);
 		res.insert(res.end(), p);
 	}
 	return res;
@@ -315,18 +120,45 @@ vector<EPoint> keyProj(int* coalition, vector<int> shares, EPoint *G) {
 void getHash() {
 	char ibuf[] = "compute sha1";
 	unsigned char obuf[20];
-
 	SHA1((unsigned char*)ibuf, strlen(ibuf), obuf);
-
-	int i;
-	for (i = 0; i < 20; i++) {
+	for (int i = 0; i < 20; i++) {
 		printf("%02x ", obuf[i]);
 	}
 	printf("\n");
 }
 
-*/
+class EPoint {
+	public:
+		EPoint() {
 
+		}
+		EPoint(BigNumber x, BigNumber y) {
+
+		}
+		EPoint(BigNumber x, BigNumber y, EC_GROUP *curve) {
+			this->curve = curve;
+			this->x = x;
+			this->y = y;
+			P = EC_POINT_new(curve);
+			if (1 != EC_POINT_set_affine_coordinates_GFp(curve, P, this->x.bn, this->y.bn, NULL)) return;//handleErrors();
+		}
+		EPoint(EC_POINT *P) {
+			this->P = P;
+		}
+		void setCurve(EC_GROUP *curve) {
+			this->curve = curve;
+		}
+		void print() {
+			std::cout << "(" << x.decimal() << " : " << y.decimal() << ")" << endl;
+		}
+		BigNumber x;
+		BigNumber y;
+	private:
+		EC_GROUP *curve;
+		EC_POINT *P;
+
+
+};
 BigNumber operator + (BigNumber a, BigNumber b)
 {
 	BIGNUM *r = BN_new();
@@ -348,10 +180,10 @@ BigNumber operator * (BigNumber a, BigNumber b)
 	BIGNUM *r = BN_new();
 	BN_CTX *ctx1;
 	if (ctx1 = BN_CTX_new())
-	if (BN_mul(r, a.bn, b.bn, ctx1)) {
-		BN_CTX_free(ctx1);
-		return BigNumber(r);
-	}
+		if (BN_mul(r, a.bn, b.bn, ctx1)) {
+			BN_CTX_free(ctx1);
+			return BigNumber(r);
+		}
 	BN_CTX_free(ctx1);
 	return NULL;
 }
@@ -359,17 +191,27 @@ BigNumber operator * (BigNumber a, BigNumber b)
 BigNumber operator / (BigNumber a, BigNumber b)
 {
 	BIGNUM *r = BN_new();
-	if (!BN_div(r, NULL, a.bn, b.bn, ctx))
-		return NULL;
-	return BigNumber(r);
+	BN_CTX *ctx1;
+	if (ctx1 = BN_CTX_new())
+		if (!BN_div(r, NULL, a.bn, b.bn, ctx)){
+			BN_CTX_free(ctx1);
+		return BigNumber(r);
+		}
+	BN_CTX_free(ctx1);
+return NULL;
 }
 
 BigNumber operator % (BigNumber a, BigNumber b)
 {
 	BIGNUM *r = BN_new();
-	if (!BN_div(NULL, r, a.bn, b.bn, ctx))
-		return NULL;
-	return BigNumber(r);
+	BN_CTX *ctx1;
+	if (ctx1 = BN_CTX_new())
+		if (!BN_div(NULL, r, a.bn, b.bn, ctx)){
+				BN_CTX_free(ctx1);
+			return BigNumber(r);
+		}
+	BN_CTX_free(ctx1);
+	return NULL;
 }
 
 int operator == (BigNumber a, BigNumber b)
@@ -396,7 +238,7 @@ EC_GROUP *create_curve(void)
 	BIGNUM *a, *b, *p, *order, *x, *y;
 	EC_POINT *generator;
 
-	/* Binary data for the curve parameters */
+	/* инициализируем параметры кривой */
 	unsigned char a_bin[1] =
 	{ 0x19 };
 	unsigned char b_bin[2] =
@@ -520,8 +362,26 @@ char * ecies_key_private_get_hex(EC_KEY *key) {
 }
 
 void printBN(char* desc, BIGNUM * bn) {
-	fprintf(stdout, "\n%s", desc);
+	fprintf(stdout, "%s", desc);
 	BN_print_fp(stdout, bn);
+	fprintf(stdout, "\n", desc);
+}
+void printPoint(EC_POINT *P, EC_GROUP *curve) {
+	BigNumber x;
+	BigNumber y;
+	if (!EC_POINT_get_affine_coordinates_GFp(curve, P, x.bn, y.bn, NULL)) handleErrors();
+	std::cout << "(" << x.decimal() << " : " << y.decimal() << ")" << endl;
+}
+
+EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve) {
+	EC_POINT *R = EC_POINT_new(curve);
+	if (1 != EC_POINT_mul(curve, R, NULL, P, n.bn, NULL)) handleErrors();
+	return R;
+}
+
+EC_POINT *createMPK(BigNumber msk, EC_POINT *P, EC_GROUP *curve) {
+	EC_POINT *R = mul(msk, P, curve);
+	return R;
 }
 
 int main(int argc, char ** argv)
@@ -538,150 +398,108 @@ int main(int argc, char ** argv)
 	
 	if (1 != EC_GROUP_check(curve1, NULL)) handleErrors();
 	// OpenSSL curve test
-	BigNumber msk(9);
-	printBN("bn_key: ", msk.bn);
+	BigNumber msk(10);
+	printBN("MSK: ", msk.bn);
 
 	// Chech Q = rG
 	BigNumber gx(1158);
 	BigNumber gy(92);
-
-	EC_POINT *Q = EC_POINT_new(curve1);
-
-	//if (NULL == (rand = EC_POINT_new(curve1))) handleErrors();
-	//if (NULL == (EC_POINT_is_on_curve(curve1, rand, ctx))) handleErrors();
-	if (NULL == (EC_POINT_is_on_curve(curve1, Q, ctx))) handleErrors();
-
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, Q, gx.bn, gy.bn, NULL)) handleErrors();
-	std::cout << "Q before mul" << endl;
-	std::cout << "(" << gx.decimal() << " : " << gy.decimal() << ")" << endl;
+	BigNumber g0x(972);
+	BigNumber g0y(795);
+	EC_POINT *G0 = EC_POINT_new(curve1);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
+	EC_POINT *G = EC_POINT_new(curve1);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, G, gx.bn, gy.bn, NULL)) handleErrors();
 	
-	if (1 != EC_POINT_mul(curve1, Q, NULL, Q, msk.bn, NULL)) handleErrors();
-	if (!EC_POINT_get_affine_coordinates_GFp(curve1, Q, gx.bn, gx.bn, NULL)) handleErrors();
-	std::cout << "Q = r * G" << endl;
-	std::cout << "(" << gx.decimal() << " : " << gy.decimal() << ")" << endl;
+	std::cout << "G0: ";
+	printPoint(G0, curve1);
+	EC_POINT *MPK = createMPK(msk, G0, curve1);
 
-
-	BigNumber a(6);
-	BigNumber b(3);
-	std::cout << "a + b = " << (a + b).decimal() << endl;
-	std::cout << "a - b = " << (a - b).decimal() << endl;
-	std::cout << "a * b = " << (a * b).decimal() << endl;
-	std::cout << "a / b = " << (a / b).decimal() << endl;
-	std::cout << "a % b = " << (a % b).decimal() << endl;
-	std::cout << "a == b = " << (a == b) << endl;
-	//if (1 != EC_KEY_set_group(myecc, curve1)) handleErrors();
-	//if (1 != EC_KEY_generate_key(myecc)) handleErrors();
-
-	//myecc = create_private_key(key, curve1);
-	//int len = EC_KEY_priv2buf(key1, check);
-	//check = ecies_key_private_get_hex(myecc);
-	/* инициализируем параметры кривой */
-	BN_CTX_free(ctx);
-
-
-	
-//	BN_free(gx);
-//	BN_free(gy);
-	//BN_free(bn_key);
-	int eee = 1;
-	// Точка-генератор пока задаается вручную
-	// Надо считать порядок кривой по Шуфу
-/*
-	bignum_fromhex(curve.a, a, ECCRYPT_BIGNUM_DIGITS);
-	bignum_fromhex(curve.b, b, ECCRYPT_BIGNUM_DIGITS);
-	bignum_fromhex(curve.m, p, ECCRYPT_BIGNUM_DIGITS);
-	bignum_fromhex(curve.g.x, gx, ECCRYPT_BIGNUM_DIGITS);
-	bignum_fromhex(curve.g.y, gy, ECCRYPT_BIGNUM_DIGITS);
-	curve.g.is_inf = 0;
-
-	// Точка P - генератор порядка 91 (G0, gens[0])
-	// (972, 795)
-
-	BigNumber k(10);
-
-	EPoint g0(972, 795);
-	g0.setCurve(&curve);
-
-	EPoint mpk;
-
-	std::cout << "MPK = MSK * G0" << "\r\n";
-	mpk = g0.mul(k, g0);
-	std::cout << mpk.x.toString() << " " << mpk.y.toString() << "\r\n";
+	std::cout << "MPK: ";
+	printPoint(MPK, curve1);
 
 	std::cout << "\r\n      PKG keys generation \r\n";
-	// Вычисляем публичный ключ на этот сеанс
-	// Второй? генератор G (gens[1], 1158, 92)
-	// Соучайный элемент из поля q = 13 (поля порядка gens[1])
 
+	// Вычисляем публичный ключ на этот сеанс
+	// Второй генератор G (gens[1], 1158, 92)
+	// Соучайный элемент из поля q = 13 (поля порядка gens[1])
 	// TODO: set_random_seed(LPoSID + KblockID)
 	int KblockID = 123;
 	int LPoSID = 677321;
 	// r следует брать соучайно r = ZZ.random_element(q)
-	BigNumber* r = new BigNumber(9);
-	EPoint Q;
-	EPoint G(BigNumber("486"), BigNumber("5c"));
-	G.setCurve(&curve);
-	Q = G.mul(*r, G);
-	Q.setCurve(&curve);
+	BigNumber r(9);
+	std::cout << "Random r: " << r.decimal() << endl;
 
-	std::cout << "Q = r * G " << "\r\n";
-	std::cout << Q.x.toString() << " " << Q.y.toString() << "\r\n";
+	EC_POINT *Q = mul(r, G, curve1);
+	//if (!EC_POINT_get_affine_coordinates_GFp(curve1, Q, gx.bn, gy.bn, NULL)) handleErrors();
+	std::cout << "Q = r * G: ";
+	printPoint(Q, curve1);
+	
+	std::cout << "Key sharing: " << endl;
 
-	//
-	// Сборка ключа
-	//
+	vector<int> shares = shamir(msk.decimal(), 10, 6);
 
-	std::cout << "Key sharing: " << "\r\n";
-
-	vector<int> shares = shamir(k.dec(), 10, 6);
 	for (int i = 0; i < shares.size(); i++)
 		std::cout << "(" << shares[i] << "), ";
-	std::cout << "\r\nKey recovery" << "\r\n";
-
+	
 	int coalition[] = { 1,3,5,7,9,10 };
-	std::cout << "Shadows: " << "\r\n";
-	vector<EPoint> proj = keyProj(coalition, shares, &Q);
+	std::cout << "\r\nShadows: " << "\r\n";
+	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve1);
 	for (int i = 0; i < 6; i++) {
-		std::cout << "(" << proj[i].x.toString() << ", " << proj[i].y.toString() << "), ";
+		printPoint(proj[i], curve1);
 	}
 
-	std::cout << "\r\nRecovered secret SK" << "\r\n";
+	std::cout << "\r\nKey recovery" << "\r\n";
+	EC_POINT *secret = keyRecovery(proj, coalition, 13, curve1);
 
-	EPoint secret = keyRecovery(proj, coalition, 13);
-	std::cout << secret.x.toString() << " " << secret.y.toString() << "\r\n";
+	std::cout << "\r\nRecovered secret SK: ";
+	printPoint(secret, curve1);
+	
+	std::cout << "\r\nCheck secret MSK * Q: ";
+	EC_POINT *check = mul(msk, Q, curve1);
+	printPoint(check, curve1);
 
-	// Проверка полученного секрета
-	std::cout << "Check SK = MSK * Q " << "\r\n";
-	EPoint check = Q.mul(k, Q);
-	std::cout << check.x.toString() << " " << check.y.toString() << "\r\n";
-
-	//
-	//	Постановка подписи
-	//
-
-	std::cout << "\r\n      Create signature" << "\r\n";
+	std::cout << "\r\n      Create signature" << endl;
 
 	BigNumber M(200);
-	BigNumber *r2 = new BigNumber(7);
-	EPoint s1;
+	BigNumber r2(7);
+	EC_POINT *s1;
 	// R = rP
-	s1 = g0.mul(*r2, g0);
-	s1.setCurve(&curve);
-	std::cout << "S1: " << s1.x.toString() << " " << s1.y.toString() << "\r\n";
+	s1 = mul(r2, G0, curve1);
+
+	std::cout << "S1: ";
+	printPoint(s1, curve1);
 
 	// set_random_seed(LPoSID+M)
 	// H = E.random_point()
 	// Тут хеширование, но пока берется "случайная" точка кривой
+	BigNumber hx(681);
+	BigNumber hy(256);
+	EC_POINT *H = EC_POINT_new(curve1);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, H, hx.bn, hy.bn, NULL)) handleErrors();
 
-	EPoint H(681, 256);
-	H.setCurve(&curve);
+
 	// S2 = r*H + SecKey
-	EPoint s2;
 	// S = sQ + rH
-	s2 = H.mul(*r2, H);
-	s2.setCurve(&curve);
-	s2 = secret.add(s2, secret);
-	std::cout << "S2: " << s2.x.toString() << " " << s2.y.toString() << "\r\n";
+	EC_POINT *s2 = mul(r2, H, curve1);
+	if (1 != EC_POINT_add(curve1, s2, s2, secret, NULL)) handleErrors();
+	
+	std::cout << "S2: ";
+	printPoint(s2, curve1);
+
+	BN_CTX_free(ctx);
+	EC_POINT_free(secret);
+	EC_POINT_free(Q);
+	EC_POINT_free(MPK);
+	EC_POINT_free(G);
+	EC_POINT_free(G0);
+	EC_POINT_free(check);
+	EC_POINT_free(s1);
+	EC_POINT_free(s2);
+	EC_POINT_free(H);
+	EC_GROUP_free(curve1);
+
+/*
 
 	std::cout << "      Verification" << "\r\n";
 	std::cout << "Weil pairing" << "\r\n";
@@ -755,7 +573,7 @@ BigNumber weilPairing(EPoint P, EPoint Q, EPoint S) {
 	BigNumber den = ((evalMiller(Q, P.sub(P, S))) / (evalMiller(Q, S.sub(EPoint(BigNumber(0), BigNumber(0)), S))));
 	return (num / den);
 }
-
+*/
 bool prime(long long n)
 {
 	for (long long i = 2; i <= sqrt(n); i++)
@@ -763,5 +581,3 @@ bool prime(long long n)
 			return false;
 	return true;
 }
-
-*/
