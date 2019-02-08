@@ -8,7 +8,7 @@ using namespace std;
 
 BigNumber::BigNumber(const BigNumber& bn) {
 	this->bn = bn.bn;
-	this->dec = decimal();
+	//this->dec = decimal();
 }
 
 BigNumber::BigNumber() {
@@ -17,7 +17,7 @@ BigNumber::BigNumber() {
 
 BigNumber::BigNumber(BIGNUM * x){
 	this->bn = x;
-	this->dec = decimal();
+	//this->dec = decimal();
 }
 
 BigNumber::BigNumber(unsigned char * x, int size) {
@@ -32,7 +32,7 @@ BigNumber::BigNumber(int number) {
 	for (int i = 0; i < 4; i++)
 		buf[3 - i] = (number >> (i * 8));
 	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
-	this->dec = decimal();
+	//this->dec = decimal();
 }
 
 BigNumber::~BigNumber(){

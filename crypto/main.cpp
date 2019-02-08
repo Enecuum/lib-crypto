@@ -222,128 +222,35 @@ void handleErrors()
 
 EC_GROUP *create_curve(void)
 {
-	//BN_CTX *ctx;
 	EC_GROUP *curve;
-	BIGNUM *a, *b, *p, *order, *x, *y;
-	EC_POINT *generator;
+	EC_POINT *G;
 
-	/* инициализируем параметры кривой */
-	unsigned char a_bin[1] =
-	{ 0x19 };
-	unsigned char b_bin[2] =
-	{ 0x03, 0xD2 };
-	unsigned char p_bin[2] =
-	{ 0x04, 0xC7 };
-	unsigned char order_bin[2] =
-	{ 0x04, 0x9F };
+	BigNumber a(25);
+	BigNumber b(978);
+	BigNumber p(1223);
+	BigNumber order(1183);
+	BigNumber g0x(972);
+	BigNumber g0y(795);
 
-	// G = (1158, 92)
-	//unsigned char x_bin[2] =
-	//{ 0x04, 0x86 };
-	//unsigned char y_bin[1] =
-	//{ 0x5C };
+	cout << "a: " << a.decimal() << endl;
+	cout << "b: " << b.decimal() << endl;
+	cout << "p: " << p.decimal() << endl;
+	cout << "G0: (" << g0x.decimal() << " " << g0y.decimal() << ")" << endl;
+	cout << "order: " << order.decimal() << endl;
 
-	// G0 = (972, 795)
-	unsigned char x_bin[2] =
-	{ 0x03, 0xCC };
-	unsigned char y_bin[2] =
-	{ 0x03, 0x1B };
-
-	/* Set the values for the various parameters */
-	if (NULL == (a = BN_bin2bn(a_bin, 1, NULL))) handleErrors();
-	if (NULL == (b = BN_bin2bn(b_bin, 2, NULL))) handleErrors();
-	if (NULL == (p = BN_bin2bn(p_bin, 2, NULL))) handleErrors();
-	if (NULL == (order = BN_bin2bn(order_bin, 2, NULL))) handleErrors();
-	if (NULL == (x = BN_bin2bn(x_bin, 2, NULL))) handleErrors();
-	if (NULL == (y = BN_bin2bn(y_bin, 2, NULL))) handleErrors();
-
-	printBN("a: ", a);
-	printBN("b: ", b);
-	printBN("p: ", p);
-	printBN("gx: ", x);
-	printBN("gy: ", y);
-	printBN("order: ", order);
-	/* Create the curve */
-	if (NULL == (curve = EC_GROUP_new_curve_GFp(p, a, b, ctx))) handleErrors();
+	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, ctx))) handleErrors();
 
 	/* Create the generator */
-	if (NULL == (generator = EC_POINT_new(curve))) handleErrors();
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, generator, x, y, ctx))
+	if (NULL == (G = EC_POINT_new(curve))) handleErrors();
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, g0x.bn, g0y.bn, ctx))
 		handleErrors();
 
 	/* Set the generator and the order */
-	if (1 != EC_GROUP_set_generator(curve, generator, order, NULL))
+	if (1 != EC_GROUP_set_generator(curve, G, order.bn, NULL))
 		handleErrors();
 
-	EC_POINT_free(generator);
-	BN_free(y);
-	BN_free(x);
-	BN_free(order);
-	BN_free(p);
-	BN_free(b);
-	BN_free(a);
-	//BN_CTX_free(ctx);
+	EC_POINT_free(G);
 	return curve;
-}
-
-EC_KEY * create_private_key(BIGNUM *bn, EC_GROUP *curve) {
-
-	//EC_GROUP *group;
-	//BIGNUM *bn = NULL;
-	EC_KEY *key = NULL;
-
-	if (!(key = EC_KEY_new())) {
-		printf("EC_KEY_new\n");
-		printf("%s\n", ERR_error_string(ERR_get_error(), NULL));
-		return NULL;
-	}
-
-	EC_GROUP_set_point_conversion_form(curve, POINT_CONVERSION_COMPRESSED);
-
-	if (EC_KEY_set_group(key, curve) != 1) {
-		printf("EC_KEY_set_group\n");
-		printf("%s\n", ERR_error_string(ERR_get_error(), NULL));
-		EC_GROUP_free(curve);
-		EC_KEY_free(key);
-		return NULL;
-	}
-
-	//EC_GROUP_free(curve);
-
-	//if (NULL == (bn = BN_bin2bn(hex, 1, NULL))) handleErrors();
-
-	if (EC_KEY_set_private_key(key, bn) != 1) {
-		printf("EC_KEY_set_private_key\n");
-		printf("%s\n", ERR_error_string(ERR_get_error(), NULL));
-		EC_KEY_free(key);
-		BN_free(bn);
-		return NULL;
-	}
-
-	//BN_free(bn);
-
-	return key;
-}
-
-char * ecies_key_private_get_hex(EC_KEY *key) {
-
-	char *hex;
-	const BIGNUM *bn;
-
-	if (!(bn = EC_KEY_get0_private_key(key))) {
-		printf("EC_KEY_get0_private_key\n");
-		printf("%s\n", ERR_error_string(ERR_get_error(), NULL));
-		return NULL;
-	}
-
-	if (!(hex = BN_bn2hex(bn))) {
-		printf("BN_bn2hex\n");
-		printf("%s\n", ERR_error_string(ERR_get_error(), NULL));
-		return NULL;
-	}
-
-	//printf("PRIV: %s\n", hex);
-	return hex;
 }
 
 void printBN(char* desc, BIGNUM * bn) {
@@ -371,19 +278,24 @@ EC_POINT *createMPK(BigNumber msk, EC_POINT *P, EC_GROUP *curve) {
 
 int main(int argc, char ** argv)
 {
-	OpenSSL_add_all_algorithms();
-	ERR_load_BIO_strings();
-	ERR_load_crypto_strings();
+	//OpenSSL_add_all_algorithms();
+	//ERR_load_BIO_strings();
+	//ERR_load_crypto_strings();
+	//srand(time(0));
+	//for (int i = 0; i < 1000; i++) {
+		//if ((i % 100) == 0)
+			//cout << i << endl;
+	//std::cout.setstate(std::ios_base::failbit);
 	if (NULL == (ctx = BN_CTX_new())) handleErrors();
 
 	EC_GROUP *curve1;
 	if (NULL == (curve1 = create_curve()))
-		std::cout << "error" << "\r\n";
+		std::cout << "error" << endl;
 
 	if (1 != EC_GROUP_check(curve1, NULL)) handleErrors();
 	// OpenSSL curve test
 	BigNumber msk(10);
-	printBN("MSK: ", msk.bn);
+	cout << "MSK: " << msk.decimal() << endl;
 
 	// Chech Q = rG
 	BigNumber gx(1158);
@@ -430,13 +342,13 @@ int main(int argc, char ** argv)
 		printPoint(proj[i], curve1);
 	}
 
-	std::cout << "\r\nKey recovery" << "\r\n";
+	std::cout << "\r\n      Key recovery" << endl;
 	EC_POINT *secret = keyRecovery(proj, coalition, 13, curve1);
 
-	std::cout << "\r\nRecovered secret SK: ";
+	std::cout << "Recovered secret SK: \t";
 	printPoint(secret, curve1);
 
-	std::cout << "\r\nCheck secret MSK * Q: ";
+	std::cout << "Check secret MSK * Q: \t";
 	EC_POINT *check = mul(msk, Q, curve1);
 	printPoint(check, curve1);
 
@@ -498,7 +410,9 @@ int main(int argc, char ** argv)
 	EC_POINT_free(s2);
 	EC_POINT_free(H);
 	EC_GROUP_free(curve1);
-
+	//}
+	//std::cout.clear();
+	cout << "runtime = " << clock() / 1000.0 << endl; // время работы программы         
 	system("pause");
 	return 0;
 }
