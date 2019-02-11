@@ -32,7 +32,7 @@ BigNumber::BigNumber(int number) {
 	for (int i = 0; i < 4; i++)
 		buf[3 - i] = (number >> (i * 8));
 	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
-	//this->dec = decimal();
+	this->dec = number;
 }
 
 BigNumber::~BigNumber(){
@@ -40,6 +40,9 @@ BigNumber::~BigNumber(){
 }
 
 int BigNumber::decimal() {
-	long x = strtol(BN_bn2hex(bn), NULL, 16);
+	int x = strtol(BN_bn2hex(bn), NULL, 16);
 	return x;
+}
+char* BigNumber::toDecString() {
+	return BN_bn2dec(bn);
 }

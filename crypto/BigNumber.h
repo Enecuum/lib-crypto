@@ -1,5 +1,6 @@
-#include <openssl/bn.h>
 #pragma once
+#include <openssl/bn.h>
+
 class BigNumber
 {
 public:
@@ -10,6 +11,7 @@ public:
 	BigNumber(int x);
 	~BigNumber();
 	int decimal();
+	char* toDecString();
 	BIGNUM* bn;
 	long dec;
 };
