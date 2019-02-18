@@ -170,7 +170,7 @@ void handleErrors()
 {
 	printf("\n%s\n", ERR_error_string(ERR_get_error(), NULL));
 	//system("pause");
-	//abort();
+	abort();
 }
 
 EC_GROUP *create_curve(void)
@@ -202,6 +202,8 @@ EC_GROUP *create_curve(void)
 	if (1 != EC_GROUP_set_generator(curve, G, order.bn, NULL))
 		handleErrors();
 
+	// OpenSSL curve test
+	if (1 != EC_GROUP_check(curve, NULL)) handleErrors();
 	EC_POINT_free(G);
 	return curve;
 }
@@ -229,28 +231,38 @@ EC_POINT *createMPK(BigNumber msk, EC_POINT *P, EC_GROUP *curve) {
 	return R;
 }
 
+BigNumber getRandom(BigNumber max) {
+	BIGNUM *r = BN_secure_new();
+	do {
+		if (!BN_rand_range(r, max.bn)) handleErrors();
+	} while (BN_is_zero(r));
+	return BigNumber(r);
+}
+
 int main(int argc, char ** argv)
 {
 	//OpenSSL_add_all_algorithms();
 	//ERR_load_BIO_strings();
 	//ERR_load_crypto_strings();
+
 	//srand(time(0));
 	//for (int i = 0; i < 1000; i++) {
-		//if ((i % 100) == 0)
-			//cout << i << endl;
-	//std::cout.setstate(std::ios_base::failbit);
+	//	if ((i % 100) == 0) {
+	//		std::cout.clear();
+	//		cout << i << endl;
+	//	}
+	// std::cout.setstate(std::ios_base::failbit);
 	if (NULL == (ctx = BN_CTX_new())) handleErrors();
 
 	EC_GROUP *curve1;
 	if (NULL == (curve1 = create_curve()))
 		std::cout << "error" << endl;
 
-	if (1 != EC_GROUP_check(curve1, NULL)) handleErrors();
-	// OpenSSL curve test
-	BigNumber msk(10);
+	
+	BigNumber msk(10);// = getRandom(BigNumber(1223));
 	cout << "MSK: " << msk.decimal() << endl;
 	BigNumber q(13);	// G0 order
-	// Chech Q = rG
+
 	BigNumber gx(1158);
 	BigNumber gy(92);
 	BigNumber g0x(972);
@@ -276,7 +288,8 @@ int main(int argc, char ** argv)
 	int KblockID = 123;
 	int LPoSID = 677321;
 	// r следует брать соучайно r = ZZ.random_element(q)
-	BigNumber r(9);
+	BigNumber r = getRandom(q);
+
 	std::cout << "Random r: " << r.decimal() << endl;
 
 	EC_POINT *Q = mul(r, G, curve1);
@@ -308,7 +321,8 @@ int main(int argc, char ** argv)
 	std::cout << "\r\n      Create signature" << endl;
 
 	BigNumber M(200);
-	BigNumber r2(7);
+	BigNumber r2 = getRandom(q);
+	cout << "r2: " << r2.decimal() << endl;
 	EC_POINT *s1;
 	// R = rP
 	s1 = mul(r2, G0, curve1);
@@ -319,6 +333,8 @@ int main(int argc, char ** argv)
 	// set_random_seed(LPoSID+M)
 	// H = E.random_point()
 	// Тут хеширование, но пока берется "случайная" точка кривой
+	
+	
 	BigNumber hx(681);
 	BigNumber hy(256);
 	EC_POINT *H = EC_POINT_new(curve1);
@@ -365,12 +381,12 @@ int main(int argc, char ** argv)
 	EC_GROUP_free(curve1);
 	//}
 	//std::cout.clear();
-	cout << "runtime = " << clock() / 1000.0 << endl; // время работы программы         
+	//cout << "runtime = " << clock() / 1000.0 << endl; // время работы программы         
 	system("pause");
 	return 0;
 }
 
-BigNumber g(EC_POINT *P, EC_POINT *Q, BigNumber x1, BigNumber y1, EC_GROUP *curve) {
+BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, EC_GROUP *curve) {
 	BigNumber px;
 	BigNumber py;
 	if (!EC_POINT_get_affine_coordinates_GFp(curve, P, px.bn, py.bn, NULL)) handleErrors();
@@ -400,7 +416,7 @@ BigNumber g(EC_POINT *P, EC_POINT *Q, BigNumber x1, BigNumber y1, EC_GROUP *curv
 	return (num / den);
 }
 
-BigNumber miller(string m, EC_POINT *P, BigNumber x1, BigNumber y1, EC_GROUP *curve) {
+BigNumber miller(string m, EC_POINT *P, const BigNumber &x1, const BigNumber &y1, EC_GROUP *curve) {
 	EC_POINT *T = EC_POINT_new(curve);
 	if (1 != EC_POINT_copy( T, P)) handleErrors();
 	BigNumber gret;
