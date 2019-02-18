@@ -4,7 +4,6 @@
 #include "BigNumber.h"
 #include <sstream>
 #include <vector>
-using namespace std;
 
 BigNumber::BigNumber(const BigNumber& bn) {
 	this->bn = bn.bn;
@@ -28,7 +27,7 @@ BigNumber::BigNumber(unsigned char * x, int size) {
 }
 
 BigNumber::BigNumber(int number) {
-	vector<unsigned char> buf(4);
+	std::vector<unsigned char> buf(4);
 	for (int i = 0; i < 4; i++)
 		buf[3 - i] = (number >> (i * 8));
 	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
