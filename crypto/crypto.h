@@ -22,7 +22,7 @@ BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve);
 EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve);
 void printBN(char* desc, BIGNUM * bn);
 void handleErrors();
-EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
+extern "C" CRYPTOLIBRARY_API EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
 void printPoint(EC_POINT *P, EC_GROUP *curve);
 EC_POINT *createMPK(BigNumber msk, EC_POINT *P, EC_GROUP *curve);
 extern "C" CRYPTOLIBRARY_API BigNumber getRandom(BigNumber max);
