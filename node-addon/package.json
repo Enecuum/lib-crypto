@@ -1,0 +1,19 @@
+{
+  "name": "node-addon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "addon.js",
+  "dependencies": {
+    "bindings": "^1.2.1",
+    "node-addon-api": "^1.6.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node-gyp rebuild"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "gypfile": true
+}

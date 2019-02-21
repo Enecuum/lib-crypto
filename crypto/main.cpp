@@ -7,6 +7,43 @@
 #include "crypto.h"
 using namespace std;
 
+class Curve
+{
+	public:
+		Curve() {
+
+		}
+		Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy) {
+			this->curve = create_curve(a, b, p, order, gx, gy);
+			this->order = order;
+		}
+		EC_POINT *getPoint() {
+			return EC_POINT_new(this->curve);
+		}
+		//Point createPoint(BigNumber x, BigNumber y) {
+		//	Point pt(x, y, curve);
+		//	return pt;
+		//}
+		EC_GROUP* getCurve() {
+			return curve;
+		}
+		BigNumber order;
+	private:
+		EC_GROUP *curve;
+};
+
+class Point
+{
+	private:
+		Point(BigNumber x, BigNumber y, EC_GROUP *curve) {
+			this->P = EC_POINT_new(curve);
+			if (1 != EC_POINT_set_affine_coordinates_GFp(curve, P, x.bn, y.bn, NULL)) return;
+		}
+		EC_POINT *P;
+		friend class Curve;
+		
+};
+
 int main(int argc, char ** argv)
 {
 	//OpenSSL_add_all_algorithms();
@@ -23,18 +60,37 @@ int main(int argc, char ** argv)
 	//if (NULL == (ctx = BN_CTX_new())) handleErrors();
 
 	EC_GROUP *curve1;
-	if (NULL == (curve1 = create_curve()))
+
+	BigNumber a(25);
+	BigNumber b(978);
+	BigNumber p(1223);
+	BigNumber order(1183);
+	BigNumber g0x(972);
+	BigNumber g0y(795);
+
+	cout << "a: " << a.decimal() << endl;
+	cout << "b: " << b.decimal() << endl;
+	cout << "p: " << p.decimal() << endl;
+	cout << "G0: (" << g0x.decimal() << " " << g0y.decimal() << ")" << endl;
+	cout << "order: " << order.decimal() << endl;
+
+
+	if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
 		std::cout << "error" << endl;
 
-	
 	BigNumber msk(10);// = getRandom(BigNumber(1223));
 	cout << "MSK: " << msk.decimal() << endl;
 	BigNumber q(13);	// G0 order
 
 	BigNumber gx(1158);
 	BigNumber gy(92);
-	BigNumber g0x(972);
-	BigNumber g0y(795);
+
+	//Curve cv(a, b, p, order, g0x, g0y);
+	//EC_POINT *tst = cv.createPoint(gx, gy);
+	//std::cout << "===============tst: ";
+	//printPoint(tst, cv.getCurve());
+
+
 	EC_POINT *G0 = EC_POINT_new(curve1);
 	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
 	EC_POINT *G = EC_POINT_new(curve1);
@@ -69,10 +125,10 @@ int main(int argc, char ** argv)
 	for (int i = 0; i < shares.size(); i++)
 		std::cout << "(" << shares[i].decimal() << "), ";
 
-	int coalition[] = { 1,3,5,7,9,10 };
+	vector<int> coalition = { 1,3,5,7,9,10 };
 	std::cout << "\r\nShadows: " << "\r\n";
 	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve1);
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < proj.size(); i++) {
 		printPoint(proj[i], curve1);
 	}
 
@@ -133,7 +189,7 @@ int main(int argc, char ** argv)
 	BigNumber c1 = weilPairing(s1, H, S, curve1);
 	std::cout << "c1 = e(R, H1)\t" << c1.decimal() << "\r\n";
 
-	BigNumber b1c1 = (b1 * c1) % BigNumber(1223);
+	BigNumber b1c1 = (b1 * c1) % p;
 	std::cout << "r1 = b1 * c1\t" << b1c1.decimal() << "\r\n";
 
 	//BN_CTX_free(ctx);

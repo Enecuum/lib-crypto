@@ -1,7 +1,14 @@
 #pragma once
+
+#ifdef CRYPTOLIBRARY_EXPORTS
+#define  CRYPTOLIBRARY_API __declspec(dllexport)
+#else
+#define  CRYPTOLIBRARY_API __declspec(dllimport)
+#endif
+
 #include <openssl/bn.h>
 
-class BigNumber
+class CRYPTOLIBRARY_API BigNumber
 {
 public:
 	BigNumber();
@@ -15,3 +22,4 @@ public:
 	BIGNUM* bn;
 	long dec;
 };
+

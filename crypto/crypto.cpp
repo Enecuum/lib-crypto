@@ -70,12 +70,12 @@ BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
 	return BigNumber(r);
 }
 
-EC_POINT* keyRecovery(vector<EC_POINT*> proj, int* coalition, BigNumber q, EC_GROUP *curve) {
+EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, EC_GROUP *curve) {
 	EC_POINT *secret = EC_POINT_new(curve);
 	EC_POINT *buff = EC_POINT_new(curve);
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < proj.size(); i++) {
 		BigNumber lambda(1);
-		for (int j = 0; j < 6; j++) {
+		for (int j = 0; j < proj.size(); j++) {
 			if (i != j) {
 				//lamb = (lamb * (0-coalition[j]))/(coalition[i]-coalition[j]) % q
 				BigNumber nom = msub(BigNumber(0), BigNumber(coalition[j]), q);
@@ -124,9 +124,9 @@ vector<BigNumber> shamir(BigNumber secretM, int participantN, int sufficientK, B
 }
 
 /* Get shadows of secret key (ss_i = coalition[i] * Q)*/
-vector<EC_POINT*> keyProj(int* coalition, vector<BigNumber> shares, EC_POINT *G, EC_GROUP *curve) {
+vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *G, EC_GROUP *curve) {
 	vector<EC_POINT*> res;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < coalition.size(); i++) {
 		EC_POINT *p = mul(shares[coalition[i] - 1].bn, G, curve);
 		res.insert(res.end(), p);
 	}
@@ -150,29 +150,16 @@ void handleErrors()
 	abort();
 }
 
-EC_GROUP *create_curve(void)
+EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy)
 {
 	EC_GROUP *curve;
 	EC_POINT *G;
-
-	BigNumber a(25);
-	BigNumber b(978);
-	BigNumber p(1223);
-	BigNumber order(1183);
-	BigNumber g0x(972);
-	BigNumber g0y(795);
-
-	cout << "a: " << a.decimal() << endl;
-	cout << "b: " << b.decimal() << endl;
-	cout << "p: " << p.decimal() << endl;
-	cout << "G0: (" << g0x.decimal() << " " << g0y.decimal() << ")" << endl;
-	cout << "order: " << order.decimal() << endl;
 
 	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, ctx))) handleErrors();
 
 	/* Create the generator */
 	if (NULL == (G = EC_POINT_new(curve))) handleErrors();
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, g0x.bn, g0y.bn, ctx))
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, ctx))
 		handleErrors();
 
 	/* Set the generator and the order */
@@ -305,5 +292,10 @@ BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve) {
 	EC_POINT_free(QS);
 	EC_POINT_free(invS);
 	EC_POINT_free(PS);
-	return ((nom / den) % BigNumber(1223));
+	return mdiv(nom, den, BigNumber(1223));
+}
+
+
+int ecc_sum(int a, int b) {
+	return a + b;
 }

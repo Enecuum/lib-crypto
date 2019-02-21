@@ -7,7 +7,7 @@
 
 BigNumber::BigNumber(const BigNumber& bn) {
 	this->bn = bn.bn;
-	//this->dec = decimal();
+	this->dec = decimal();
 }
 
 BigNumber::BigNumber() {
@@ -16,7 +16,7 @@ BigNumber::BigNumber() {
 
 BigNumber::BigNumber(BIGNUM * x){
 	this->bn = x;
-	//this->dec = decimal();
+	this->dec = decimal();
 }
 
 BigNumber::BigNumber(unsigned char * x, int size) {
