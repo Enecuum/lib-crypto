@@ -155,11 +155,11 @@ EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, B
 	EC_GROUP *curve;
 	EC_POINT *G;
 
-	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, ctx))) handleErrors();
+	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, NULL))) handleErrors();
 
 	/* Create the generator */
 	if (NULL == (G = EC_POINT_new(curve))) handleErrors();
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, ctx))
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, NULL))
 		handleErrors();
 
 	/* Set the generator and the order */
@@ -298,4 +298,8 @@ BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve) {
 
 int ecc_sum(int a, int b) {
 	return a + b;
+}
+
+BigNumber createObject(int a) {
+	return BigNumber(a);
 }

@@ -19,7 +19,7 @@
 #include "BigNumber.h"
 
 BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve);
-EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve);
+extern "C" CRYPTOLIBRARY_API EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve);
 void printBN(char* desc, BIGNUM * bn);
 void handleErrors();
 extern "C" CRYPTOLIBRARY_API EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
@@ -33,6 +33,8 @@ BigNumber operator * (const BigNumber &a, const BigNumber &b);
 BigNumber operator % (const BigNumber &a, const BigNumber &b);
 BigNumber operator / (const BigNumber &a, const BigNumber &b);
 BigNumber operator - (const BigNumber &a, const BigNumber &b);
-BigNumber operator + (const BigNumber &a, const BigNumber &b);
+extern "C" CRYPTOLIBRARY_API BigNumber operator + (const BigNumber &a, const BigNumber &b);
 
 extern "C" CRYPTOLIBRARY_API int ecc_sum(int a, int b);
+
+extern "C" CRYPTOLIBRARY_API BigNumber createObject(int a);
