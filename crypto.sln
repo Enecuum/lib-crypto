@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		dll|x64 = dll|x64
+		dll|x86 = dll|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -17,6 +19,10 @@ Global
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Debug|x64.Build.0 = Debug|x64
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Debug|x86.ActiveCfg = Debug|Win32
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Debug|x86.Build.0 = Debug|Win32
+		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.dll|x64.ActiveCfg = dll|x64
+		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.dll|x64.Build.0 = dll|x64
+		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.dll|x86.ActiveCfg = dll|Win32
+		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.dll|x86.Build.0 = dll|Win32
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Release|x64.ActiveCfg = Release|x64
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Release|x64.Build.0 = Release|x64
 		{3BB40911-82BF-4FE3-A11F-4327D7F15851}.Release|x86.ActiveCfg = Release|Win32
@@ -24,5 +30,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0285593E-39FE-4271-B4E3-8CFC42FBB27A}
 	EndGlobalSection
 EndGlobal

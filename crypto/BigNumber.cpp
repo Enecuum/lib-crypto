@@ -1,26 +1,47 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE 
-#include "bignum.h"
+#define _CRT_SECURE_NO_DEPRECATE  
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-class BigNumber {
-	public:
-		BigNumber(int number) {
-			this->numberDec = number;
-			bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-			char buf[65];
-			_itoa(number, buf, 16);
-			bignum_fromhex(rslt, buf, BIGNUM_MAX_DIGITS);
-		}
-		int dec() {
-			return this->numberDec;
-		}
-		bignum_digit_t* hex() {
-			return this->rslt;
-		}
-	private:
-		bignum_digit_t rslt[BIGNUM_MAX_DIGITS];
-		int numberDec;
-};
+#include "BigNumber.h"
+#include <sstream>
+#include <vector>
+
+BigNumber::BigNumber(const BigNumber& bn) {
+	this->bn = bn.bn;
+	//this->dec = decimal();
+}
+
+BigNumber::BigNumber() {
+	this->bn = BN_new();
+}
+
+BigNumber::BigNumber(BIGNUM * x){
+	this->bn = x;
+	//this->dec = decimal();
+}
+
+BigNumber::BigNumber(unsigned char * x, int size) {
+	
+	//BIGNUM *bn = NULL;
+	if (NULL == (this->bn = BN_bin2bn(x, size, NULL))) return;
+	//this->bn = bn;
+}
+
+BigNumber::BigNumber(int number) {
+	std::vector<unsigned char> buf(4);
+	for (int i = 0; i < 4; i++)
+		buf[3 - i] = (number >> (i * 8));
+	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
+	this->dec = number;
+}
+
+BigNumber::~BigNumber(){
+	//BN_free(bn);
+}
+
+int BigNumber::decimal() {
+	int x = strtol(BN_bn2hex(bn), NULL, 16);
+	return x;
+}
+char* BigNumber::toDecString() {
+	return BN_bn2dec(bn);
+}
