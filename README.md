@@ -3,16 +3,43 @@
 Elliptic curve cryptography library.
 
 Сейчас данный код демонстрирует работу алгоритмов 4-8 из [TechPaper](https://new.enecuum.com/files/tp_en.pdf), а также проверку подписи по формуле 3.5
-Для работы необходима библиотека OpenSSL (на момент написания использована [Win32 OpenSSL v1.1.1](https://slproweb.com/products/Win32OpenSSL.html).
+Для работы необходима библиотека OpenSSL 
 
-For Linux:
+OpenSSL for Linux:
 
 `sudo apt-get install libssl-dev`
 
-Сборка:
+Сборка примера:
 ```
 cd crypto
 g++ *.cpp -lcrypto -o test
 ./test
 ```
-При возникновении ошибки **"No openssl_applink"** следует собрать проект с опцией /MD
+Сборка .so библиотеки:
+```
+cd crypto
+g++ -fPIC *.cpp -shared -o libecc.so
+```
+
+### Node.js Binding
+
+Для использования библиотеки в связке с Nodejs написан биндинг-аддон на основе [node-addon-api](https://github.com/nodejs/node-addon-api). 
+**Проблемы с работой в Windows 10. Причины выясняются.**
+
+Сборка аддона:
+В файле `binding.gyp` указать верный путь к библиотеке libecc.so
+```
+...
+	"libraries": [ "../lib-crypto/crypto/libecc.so" ]
+...
+```
+В файле `node-bignumber.h` указать верный путь к заголовку `crypto.h`
+
+`#include "../lib-crypto/crypto.h"`
+
+Сборка и запуск примера
+```
+cd node-addon
+npm install
+node ./addon.js
+```

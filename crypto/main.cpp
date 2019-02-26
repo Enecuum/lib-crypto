@@ -115,8 +115,8 @@ int main(int argc, char ** argv)
 	BigNumber r = getRandom(q);
 
 	std::cout << "Random r: " << r.decimal() << endl;
-
 	EC_POINT *Q = mul(r, G, curve1);
+
 	std::cout << "Q = r * G: ";
 	printPoint(Q, curve1);
 
@@ -133,7 +133,7 @@ int main(int argc, char ** argv)
 	}
 
 	std::cout << "\r\n      Key recovery" << endl;
-	EC_POINT *secret = keyRecovery(proj, coalition, BigNumber(13), curve1);
+	EC_POINT *secret = keyRecovery(proj, coalition, q, curve1);
 
 	std::cout << "Recovered secret SK: \t";
 	printPoint(secret, curve1);

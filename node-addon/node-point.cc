@@ -8,31 +8,6 @@
 #include <stdio.h>
 #include <uv.h>
 #include "node-bignumber.h"
-// NodePT::NodePT(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NodePT>(info) {
-//   Napi::Env env = info.Env();
-//   Napi::HandleScope scope(env);
-// //Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
-//   //this->val_ = info[0].As<Napi::Number>().DoubleValue();
-
-
-//   NCurve* curve1 = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
-
-// 	//Napi::Error::New(env, std::to_string(len)).ThrowAsJavaScriptException();
-
-//    EC_POINT *res;
-//  if (NULL == (res = EC_POINT_new(curve1->crv)))
-//  	Napi::Error::New(env, "EC_POINT_new error").ThrowAsJavaScriptException();
-//  // Napi::Error::New(env, "OK").ThrowAsJavaScriptException();
-// 	 //= EC_POINT_new(curve1->curve);
-//  	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1->crv, res, x->bn.bn, y->bn.bn, NULL))
-//  		Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
-// //   printf("www");
-//    this->p = res;
-//    this->curve = curve1->crv;
-//    this->x = x->bn.bn; 
-//    this->y = y->bn.bn; 
-// //ERR_error_string(ERR_get_error(), NULL)
-// };
 
 NodePT::NodePT(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NodePT>(info) {
   Napi::Env env = info.Env();
