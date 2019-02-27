@@ -1,13 +1,5 @@
 var addon = require('bindings')('addon');
 
-
-
-var obj1 = addon.BigNumber(10);
-var obj2 = addon.BigNumber(20);
-var result = addon.add(obj1, obj2);
-
-console.log(result.value()); // 30
-
 	var a = addon.BigNumber(25);
 	var b = addon.BigNumber(978);
 	var p = addon.BigNumber(1223);
@@ -56,10 +48,10 @@ console.log("Shadows: ");
 console.log("Key recovery");	
 	var secret = addon.keyRecovery(proj, coalition, q, curve);
 
-console.log("Recovered secret SK: " + secret.xy(curve));
+console.log("Recovered secret SK:\t" + secret.xy(curve));
 
 	var check = addon.mul(msk, Q, curve);
-console.log("Check secret MSK * Q: " + check.xy(curve));
+console.log("Check secret MSK * Q:\t" + check.xy(curve));
 
 console.log("Create signature");
 
@@ -79,7 +71,6 @@ console.log("S1: " + s1.xy(curve));
 	// S = sQ + rH
 	var s2 = addon.mul(r2, H, curve);
 	s2 = addon.addPoints(s2, secret, curve);
-	//if (1 != EC_POINT_add(curve1, s2, s2, secret, NULL)) handleErrors();
 
 console.log("S2: " + s2.xy(curve));
 
@@ -91,13 +82,13 @@ console.log("Weil pairing");
 	var S = addon.Point(sx, sy, curve)
 
 	var r1 = addon.weilPairing(G0, s2, S, curve);
-	console.log("r1 = e(P, S): " + r1.value());
+	console.log("r1 = e(P, S):\t" + r1.value());
 
 	var b1 = addon.weilPairing(MPK, Q, S, curve);
-	console.log("b1 = e(MPK, Q): " + b1.value());
+	console.log("b1 = e(MPK, Q):\t" + b1.value());
 
 	var c1 = addon.weilPairing(s1, H, S, curve);
-	console.log("c1 = e(R, H1): " + c1.value());
+	console.log("c1 = e(R, H1):\t" + c1.value());
 	
 	var b1c1 = addon.mmul(b1, c1, p);
-	console.log("r1 = b1 * c1: " + b1c1.value());
+	console.log("r1 = b1 * c1:\t" + b1c1.value());

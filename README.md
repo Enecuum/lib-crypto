@@ -24,7 +24,7 @@ g++ -fPIC *.cpp -shared -o libecc.so
 ### Node.js Binding
 
 Для использования библиотеки в связке с Nodejs написан биндинг-аддон на основе [node-addon-api](https://github.com/nodejs/node-addon-api). 
-**Проблемы с работой в Windows 10. Причины выясняются.**
+**Node.JS version 10+ required**
 
 Сборка аддона:
 В файле `binding.gyp` указать верный путь к библиотеке libecc.so
