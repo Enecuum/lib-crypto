@@ -1,5 +1,8 @@
 var addon = require('bindings')('addon');
 
+var number = [ 0x4, 0x86 ];
+	var test = addon.BigNumber(number);
+console.log(test.value());
 	var a = addon.BigNumber(25);
 	var b = addon.BigNumber(978);
 	var p = addon.BigNumber(1223);

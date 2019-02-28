@@ -20,8 +20,7 @@ class NCurve : public Napi::ObjectWrap<NCurve> {
 		static void Init(Napi::Env env, Napi::Object exports);
 		static Napi::Object NewInstance(Napi::Value arg);
 		NCurve(const Napi::CallbackInfo& info);
-		EC_GROUP* crv;
-		double d;
+		Curve crv;
 	private:
 		static Napi::FunctionReference constructor;
 		Napi::Value GetValue(const Napi::CallbackInfo& info);

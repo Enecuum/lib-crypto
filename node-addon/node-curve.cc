@@ -11,7 +11,8 @@ NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) 
     NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
     NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
 
-    EC_GROUP *curve = create_curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
+    Curve curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
+
     this->crv = curve;
 };
 

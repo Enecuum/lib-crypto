@@ -1,8 +1,7 @@
 {
   "targets": [
     { 
-      "cflags!": [ "-fno-exceptions" ],
-      "cflags_cc!": [ "-fno-exceptions" ],
+
       'msvs_settings': {
     'VCCLCompilerTool': { 'ExceptionHandling': 1 },
   },
@@ -13,7 +12,7 @@
       "target_name": "addon",
       "sources": [  "addon.cc", "node-bignumber.cc", "node-point.cc" , "node-curve.cc"  ],
       "libraries": [ "../ecc/x64/dll/crypto.lib" ],
-      'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ]
+      
     }
   ]
 }

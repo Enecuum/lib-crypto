@@ -36,7 +36,7 @@ Napi::Value NodePT::GetCoords(const Napi::CallbackInfo& info) {
     BigNumber x;
     BigNumber y;
     NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
-    if (!EC_POINT_get_affine_coordinates_GFp(curve->crv, this->p, x.bn, y.bn, NULL))
+    if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, this->p, x.bn, y.bn, NULL))
         Napi::Error::New(env, "EC_POINT_new error").ThrowAsJavaScriptException();
     std::string str = "(" + std::to_string(x.decimal()) + " " + std::to_string(y.decimal()) + ")";
     return Napi::String::New(info.Env(), str);
@@ -47,7 +47,7 @@ Napi::Value NodePT::SetCoords(const Napi::CallbackInfo& info) {
     NodeBN* x = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
     NodeBN* y = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
     NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
-    if (1 != EC_POINT_set_affine_coordinates_GFp(curve->crv, this->p, x->bn.bn, y->bn.bn, NULL))
+    if (1 != EC_POINT_set_affine_coordinates_GFp(curve->crv.curve, this->p, x->bn.bn, y->bn.bn, NULL))
         Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
     return Napi::Number::New(info.Env(), 1);
 }
