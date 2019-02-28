@@ -7,30 +7,7 @@
 #include "crypto.h"
 using namespace std;
 
-class Curve
-{
-	public:
-		Curve() {
 
-		}
-		Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy) {
-			this->curve = create_curve(a, b, p, order, gx, gy);
-			this->order = order;
-		}
-		EC_POINT *getPoint() {
-			return EC_POINT_new(this->curve);
-		}
-		//Point createPoint(BigNumber x, BigNumber y) {
-		//	Point pt(x, y, curve);
-		//	return pt;
-		//}
-		EC_GROUP* getCurve() {
-			return curve;
-		}
-		BigNumber order;
-	private:
-		EC_GROUP *curve;
-};
 
 class Point
 {
@@ -59,8 +36,8 @@ int main(int argc, char ** argv)
 	// std::cout.setstate(std::ios_base::failbit);
 	//if (NULL == (ctx = BN_CTX_new())) handleErrors();
 
-	EC_GROUP *curve1;
-
+	//EC_GROUP *curve1;
+	
 	BigNumber a(25);
 	BigNumber b(978);
 	BigNumber p(1223);
@@ -73,16 +50,15 @@ int main(int argc, char ** argv)
 	cout << "p: " << p.decimal() << endl;
 	cout << "G0: (" << g0x.decimal() << " " << g0y.decimal() << ")" << endl;
 	cout << "order: " << order.decimal() << endl;
-
-
-	if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
-		std::cout << "error" << endl;
+	Curve *curve = new Curve(a, b, p, order, g0x, g0y);
+	//if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
+	//	std::cout << "error" << endl;
 
 	BigNumber msk(10);// = getRandom(BigNumber(1223));
 	cout << "MSK: " << msk.decimal() << endl;
 	BigNumber q(13);	// G0 order
-
-	BigNumber gx(1158);
+	unsigned char ch[2] = { 0x4, 0x86 };
+	BigNumber gx(ch, 2);
 	BigNumber gy(92);
 
 	//Curve cv(a, b, p, order, g0x, g0y);
@@ -91,17 +67,17 @@ int main(int argc, char ** argv)
 	//printPoint(tst, cv.getCurve());
 
 
-	EC_POINT *G0 = EC_POINT_new(curve1);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
-	EC_POINT *G = EC_POINT_new(curve1);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, G, gx.bn, gy.bn, NULL)) handleErrors();
+	EC_POINT *G0 = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
+	EC_POINT *G = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, G, gx.bn, gy.bn, NULL)) handleErrors();
 
 	std::cout << "G0: ";
-	printPoint(G0, curve1);
-	EC_POINT *MPK = createMPK(msk, G0, curve1);
+	printPoint(G0, curve);
+	EC_POINT *MPK = createMPK(msk, G0, curve);
 
 	std::cout << "MPK: ";
-	printPoint(MPK, curve1);
+	printPoint(MPK, curve);
 
 	std::cout << "\r\n      PKG keys generation \r\n";
 
@@ -115,10 +91,10 @@ int main(int argc, char ** argv)
 	BigNumber r = getRandom(q);
 
 	std::cout << "Random r: " << r.decimal() << endl;
-	EC_POINT *Q = mul(r, G, curve1);
+	EC_POINT *Q = mul(r, G, curve);
 
 	std::cout << "Q = r * G: ";
-	printPoint(Q, curve1);
+	printPoint(Q, curve);
 
 	std::cout << "Key sharing: " << endl;
 	vector<BigNumber> shares = shamir(msk, 10, 6, q);
@@ -127,20 +103,20 @@ int main(int argc, char ** argv)
 
 	vector<int> coalition = { 1,3,5,7,9,10 };
 	std::cout << "\r\nShadows: " << "\r\n";
-	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve1);
+	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve);
 	for (int i = 0; i < proj.size(); i++) {
-		printPoint(proj[i], curve1);
+		printPoint(proj[i], curve);
 	}
 
 	std::cout << "\r\n      Key recovery" << endl;
-	EC_POINT *secret = keyRecovery(proj, coalition, q, curve1);
+	EC_POINT *secret = keyRecovery(proj, coalition, q, curve);
 
 	std::cout << "Recovered secret SK: \t";
-	printPoint(secret, curve1);
+	printPoint(secret, curve);
 
 	std::cout << "Check secret MSK * Q: \t";
-	EC_POINT *check = mul(msk, Q, curve1);
-	printPoint(check, curve1);
+	EC_POINT *check = mul(msk, Q, curve);
+	printPoint(check, curve);
 
 	std::cout << "\r\n      Create signature" << endl;
 
@@ -149,10 +125,10 @@ int main(int argc, char ** argv)
 	cout << "r2: " << r2.decimal() << endl;
 	EC_POINT *s1;
 	// R = rP
-	s1 = mul(r2, G0, curve1);
+	s1 = mul(r2, G0, curve);
 
 	std::cout << "S1: ";
-	printPoint(s1, curve1);
+	printPoint(s1, curve);
 
 	// set_random_seed(LPoSID+M)
 	// H = E.random_point()
@@ -161,32 +137,32 @@ int main(int argc, char ** argv)
 	
 	BigNumber hx(681);
 	BigNumber hy(256);
-	EC_POINT *H = EC_POINT_new(curve1);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, H, hx.bn, hy.bn, NULL)) handleErrors();
+	EC_POINT *H = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, H, hx.bn, hy.bn, NULL)) handleErrors();
 
 	// S2 = r*H + SecKey
 	// S = sQ + rH
-	EC_POINT *s2 = mul(r2, H, curve1);
-	if (1 != EC_POINT_add(curve1, s2, s2, secret, NULL)) handleErrors();
+	EC_POINT *s2 = mul(r2, H, curve);
+	if (1 != EC_POINT_add(curve->curve, s2, s2, secret, NULL)) handleErrors();
 
 	std::cout << "S2: ";
-	printPoint(s2, curve1);
+	printPoint(s2, curve);
 
 	std::cout << "      Verification" << "\r\n";
 	std::cout << "Weil pairing" << "\r\n";
 
 	BigNumber sx(0);
 	BigNumber sy(522);
-	EC_POINT *S = EC_POINT_new(curve1);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1, S, sx.bn, sy.bn, NULL)) handleErrors();
+	EC_POINT *S = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, S, sx.bn, sy.bn, NULL)) handleErrors();
 
-	BigNumber r1 = weilPairing(G0, s2, S, curve1);
+	BigNumber r1 = weilPairing(G0, s2, S, curve);
 	std::cout << "r1 = e(P, S)\t" << r1.decimal() << "\r\n";
 
-	BigNumber b1 = weilPairing(MPK, Q, S, curve1);
+	BigNumber b1 = weilPairing(MPK, Q, S, curve);
 	std::cout << "b1 = e(MPK, Q)\t" << b1.decimal() << "\r\n";
 
-	BigNumber c1 = weilPairing(s1, H, S, curve1);
+	BigNumber c1 = weilPairing(s1, H, S, curve);
 	std::cout << "c1 = e(R, H1)\t" << c1.decimal() << "\r\n";
 
 	BigNumber b1c1 = (b1 * c1) % p;
@@ -202,7 +178,8 @@ int main(int argc, char ** argv)
 	EC_POINT_free(s1);
 	EC_POINT_free(s2);
 	EC_POINT_free(H);
-	EC_GROUP_free(curve1);
+	delete(curve);
+	//EC_GROUP_free(curve.curve);
 	//}
 	//std::cout.clear();
 	//cout << "runtime = " << clock() / 1000.0 << endl; // время работы программы         

@@ -22,4 +22,3 @@ public:
 	BIGNUM* bn;
 	long dec;
 };
-

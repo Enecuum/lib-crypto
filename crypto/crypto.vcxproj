@@ -169,11 +169,13 @@
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp" />
     <ClCompile Include="crypto.cpp" />
+    <ClCompile Include="Curve.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BigNumber.h" />
     <ClInclude Include="crypto.h" />
+    <ClInclude Include="Curve.h" />
     <ClInclude Include="ec_conf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

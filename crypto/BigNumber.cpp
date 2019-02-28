@@ -23,6 +23,7 @@ BigNumber::BigNumber(unsigned char * x, int size) {
 	
 	//BIGNUM *bn = NULL;
 	if (NULL == (this->bn = BN_bin2bn(x, size, NULL))) return;
+	//this->dec = decimal();
 	//this->bn = bn;
 }
 

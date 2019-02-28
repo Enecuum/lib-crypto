@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <bitset>
 #include "crypto.h"
 using namespace std;
 BN_CTX *ctx = BN_CTX_new();
@@ -70,9 +71,9 @@ BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
 	return BigNumber(r);
 }
 
-EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, EC_GROUP *curve) {
-	EC_POINT *secret = EC_POINT_new(curve);
-	EC_POINT *buff = EC_POINT_new(curve);
+EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, Curve *curve) {
+	EC_POINT *secret = EC_POINT_new(curve->curve);
+	EC_POINT *buff = EC_POINT_new(curve->curve);
 	for (int i = 0; i < proj.size(); i++) {
 		BigNumber lambda(1);
 		for (int j = 0; j < proj.size(); j++) {
@@ -94,7 +95,7 @@ EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q
 			if (!EC_POINT_copy(secret, buff)) handleErrors();
 			continue;
 		}
-		if (!EC_POINT_add(curve, secret, secret, buff, NULL)) handleErrors();
+		if (!EC_POINT_add(curve->curve, secret, secret, buff, NULL)) handleErrors();
 	}
 	EC_POINT_free(buff);
 	return secret;
@@ -129,7 +130,7 @@ vector<BigNumber> shamir(BigNumber secretM, int participantN, int sufficientK, B
 }
 
 /* Get shadows of secret key (ss_i = coalition[i] * Q)*/
-vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *G, EC_GROUP *curve) {
+vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *G, Curve *curve) {
 	vector<EC_POINT*> res;
 	for (int i = 0; i < coalition.size(); i++) {
 		EC_POINT *p = mul(shares[coalition[i] - 1].bn, G, curve);
@@ -155,27 +156,7 @@ void handleErrors()
 	abort();
 }
 
-EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy)
-{
-	EC_GROUP *curve;
-	EC_POINT *G;
 
-	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, NULL))) handleErrors();
-
-	/* Create the generator */
-	if (NULL == (G = EC_POINT_new(curve))) handleErrors();
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, NULL))
-		handleErrors();
-
-	/* Set the generator and the order */
-	if (1 != EC_GROUP_set_generator(curve, G, order.bn, NULL))
-		handleErrors();
-
-	// OpenSSL curve test
-	if (1 != EC_GROUP_check(curve, NULL)) handleErrors();
-	EC_POINT_free(G);
-	return curve;
-}
 
 void printBN(char* desc, BIGNUM * bn) {
 	fprintf(stdout, "%s", desc);
@@ -183,20 +164,20 @@ void printBN(char* desc, BIGNUM * bn) {
 	fprintf(stdout, "\n", desc);
 }
 
-void printPoint(EC_POINT *P, EC_GROUP *curve) {
+void printPoint(EC_POINT *P, Curve *curve) {
 	BigNumber x;
 	BigNumber y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve, P, x.bn, y.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, x.bn, y.bn, NULL)) handleErrors();
 	std::cout << "(" << x.decimal() << " : " << y.decimal() << ")" << endl;
 }
 
-EC_POINT *mul(BigNumber n, EC_POINT *P, EC_GROUP *curve) {
-	EC_POINT *R = EC_POINT_new(curve);
-	if (1 != EC_POINT_mul(curve, R, NULL, P, n.bn, NULL)) handleErrors();
+EC_POINT *mul(BigNumber n, EC_POINT *P, Curve *curve) {
+	EC_POINT *R = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_mul(curve->curve, R, NULL, P, n.bn, NULL)) handleErrors();
 	return R;
 }
 
-EC_POINT *createMPK(BigNumber msk, EC_POINT *P, EC_GROUP *curve) {
+EC_POINT *createMPK(BigNumber msk, EC_POINT *P, Curve *curve) {
 	EC_POINT *R = mul(msk, P, curve);
 	return R;
 }
@@ -209,93 +190,86 @@ BigNumber getRandom(BigNumber max) {
 	return BigNumber(r);
 }
 
-BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, EC_GROUP *curve) {
+BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, Curve *curve) {
 	BigNumber px;
 	BigNumber py;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve, P, px.bn, py.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, px.bn, py.bn, NULL)) handleErrors();
 
 	BigNumber qx;
 	BigNumber qy;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
 
-
-	BigNumber a(25);
 	BigNumber slope;
 	//cout << "px:\t" << px.decimal() << " py:\t" << py.decimal() << endl;
 	//cout << "qx:\t" << qx.decimal() << " qy:\t" << qy.decimal() << endl;
-	if (((px == qx) == 0) && ((((py + qy) % BigNumber(1223)) == 0) == 0)) {
+	if (((px == qx) == 0) && ((((py + qy) % curve->field) == 0) == 0)) {
 		return (x1 - px);
 	}
 	if (((px == qx) == 0) && ((py == qy) == 0)) {
-		slope = mdiv((BigNumber(3) * (px * px) + a), (py + py), BigNumber(1223));
+		slope = mdiv((BigNumber(3) * (px * px) + curve->a), (py + py), curve->field);
 	}
 	else {
-		slope = mdiv((py - qy), (px - qx), BigNumber(1223));
+		slope = mdiv((py - qy), (px - qx), curve->field);
 	}
 	int s = slope.decimal();
 	BigNumber num = (y1 - py - (slope * (x1 - px)));
 	BigNumber den = (x1 + px + qx - (slope * slope));
-	//cout << "num:\t" << num.decimal() << " den:\t" << den.decimal() << endl;
-	return mdiv(num, den, BigNumber(1223));
+	return mdiv(num, den, curve->field);
 }
 
-BigNumber miller(string m, EC_POINT *P, const BigNumber &x1, const BigNumber &y1, EC_GROUP *curve) {
-	EC_POINT *T = EC_POINT_new(curve);
+BigNumber miller(string m, EC_POINT *P, const BigNumber &x1, const BigNumber &y1, Curve *curve) {
+	EC_POINT *T = EC_POINT_new(curve->curve);
 	if (1 != EC_POINT_copy(T, P)) handleErrors();
 	BigNumber gret;
 	BigNumber f(1);
 	for (int i = 0; i < m.size(); i++) {
-		gret = g(T, T, x1, y1, curve);
-
-		f = (f * (f * gret)) % BigNumber(1223);
-		//cout << "f:\t" << f.decimal() << " gret:\t" << gret.decimal() << endl;
+		f = (f * (f * g(T, T, x1, y1, curve))) % curve->field;
 		//T = T + T;
-		if (1 != EC_POINT_dbl(curve, T, T, NULL)) handleErrors();
+		if (1 != EC_POINT_dbl(curve->curve, T, T, NULL)) handleErrors();
 		if (m[i] == '1') {
-			gret = g(T, P, x1, y1, curve);
-			f = (f * gret) % BigNumber(1223);
-			//cout << "f:\t" << f.decimal() << " gret:\t" << gret.decimal() << endl;
+			f = (f * g(T, P, x1, y1, curve)) % curve->field;
 			//T = T + P;
-			if (1 != EC_POINT_add(curve, T, T, P, NULL)) handleErrors();
+			if (1 != EC_POINT_add(curve->curve, T, T, P, NULL)) handleErrors();
 		}
 	}
 	EC_POINT_free(T);
-	//cout << "f: " << (f % BigNumber(1223)).decimal() << endl;
 	return f;
 }
 
-BigNumber evalMiller(EC_POINT *P, EC_POINT *Q, EC_GROUP *curve) {
+BigNumber evalMiller(EC_POINT *P, EC_POINT *Q, Curve *curve) {
 	// Порядок подгруппы G0 в двоичном представлении без первого бита (???)
 	// TODO: Перевод в бинарную строку
 	string m = "011011";
+	//std::string binary = std::bitset<32>(91).to_string(); //to binary
+	//std::cout << binary << "\n";
 	BigNumber x;
 	BigNumber y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve, Q, x.bn, y.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, x.bn, y.bn, NULL)) handleErrors();
 	BigNumber res = miller(m, P, x, y, curve);
 	//cout << "res: " << res.decimal() << endl;
 	return res;
 }
 
-BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, EC_GROUP *curve) {
+BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *curve) {
 
 	//int num = eval_miller(P, Q + S) / eval_miller(P, S);
 	//int den = eval_miller(Q, P - S) / eval_miller(Q, -S)
 	//return (num / den)
-	EC_POINT *QS = EC_POINT_new(curve);
+	EC_POINT *QS = EC_POINT_new(curve->curve);
 	// QS = Q + S
-	if (1 != EC_POINT_add(curve, QS, Q, S, NULL)) handleErrors();
-	EC_POINT *invS = EC_POINT_new(curve);
+	if (1 != EC_POINT_add(curve->curve, QS, Q, S, NULL)) handleErrors();
+	EC_POINT *invS = EC_POINT_new(curve->curve);
 	// invS = -S
 	if (1 != EC_POINT_copy(invS, S)) handleErrors();
-	if (1 != EC_POINT_invert(curve, invS, NULL)) handleErrors();
-	EC_POINT *PS = EC_POINT_new(curve);
+	if (1 != EC_POINT_invert(curve->curve, invS, NULL)) handleErrors();
+	EC_POINT *PS = EC_POINT_new(curve->curve);
 	// PS = P - S = P + (-S)
-	if (1 != EC_POINT_add(curve, PS, P, invS, NULL)) handleErrors();
+	if (1 != EC_POINT_add(curve->curve, PS, P, invS, NULL)) handleErrors();
 
-	BigNumber nom = mdiv(evalMiller(P, QS, curve), evalMiller(P, S, curve), BigNumber(1223));
-	BigNumber den = mdiv(evalMiller(Q, PS, curve), evalMiller(Q, invS, curve), BigNumber(1223));
+	BigNumber nom = mdiv(evalMiller(P, QS, curve), evalMiller(P, S, curve), curve->field);
+	BigNumber den = mdiv(evalMiller(Q, PS, curve), evalMiller(Q, invS, curve), curve->field);
 	EC_POINT_free(QS);
 	EC_POINT_free(invS);
 	EC_POINT_free(PS);
-	return mdiv(nom, den, BigNumber(1223));
+	return mdiv(nom, den, curve->field);
 }
