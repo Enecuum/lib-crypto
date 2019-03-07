@@ -1,43 +1,67 @@
 # lib-crypto
 
-Elliptic curve cryptography library.
+Enecuum C++ library for Elliptic Curve cryptography. Based on OpenSSL EC methods.
 
-Сейчас данный код демонстрирует работу алгоритмов 4-8 из [TechPaper](https://new.enecuum.com/files/tp_en.pdf), а также проверку подписи по формуле 3.5
-Для работы необходима библиотека OpenSSL 
+- **[C++ API documentation](doc/cppapi.md)**
+- **[NodeJS addon documentation](doc/nodeapi.md)**
 
-OpenSSL for Linux:
+For now it contains realization of Algorithms 4-8 from [Enecuum Blockchain TechPaper](https://new.enecuum.com/files/tp_en.pdf), and signature verification by formula 3.5.
+
+ - Big Numbers Arithmetic - operations with numbers of any size (based on OpenSSL BIGNUM structure and methods)
+ - Creating custom Elliptic Curve (EC)
+ - Operations with EC points
+ - Shamir's key sharing scheme
+ - Key recovery
+ - Signature and Verification by Weil Pairing algorithm
+
+OpenSSL Binaries required. 
+
+### Usage (Linux)
+Download OpenSSL for Linux:
 
 `sudo apt-get install libssl-dev`
 
-Сборка примера:
+Build and run test example:
 ```
 cd crypto
 g++ *.cpp -lcrypto -o test
 ./test
 ```
-Сборка .so библиотеки:
+Build .so library:
 ```
 cd crypto
 g++ -fPIC *.cpp -shared -o libecc.so
 ```
+### Usage (Windows)
+There is `.sln` solution for Visual Studo 2017. 
+First, download [OpenSSL v1.1.1](https://slproweb.com/products/Win32OpenSSL.html).
+In project Properties set correct paths
+`[C/C++ -> General -> Additional Include Directories]` : OpenSSL’s include directory (e.g C:\openssl\include)
+`[Linker -> General -> Additional Library Directories]` : OpenSSL’s lib directory (e.g C:\openssl\lib)
+`[Linker -> Input -> Additional Dependencies]` : libcrypto.lib
 
+To build test app simply use `main.cpp` as example.
+In case of error **"No openssl_applink"** go to `[C/C++ -> Code generation -> Runtime library ]` and set value as `/MD`
+To build DLL setup project configuration for dll.
 ### Node.js Binding
 
-Для использования библиотеки в связке с Nodejs написан биндинг-аддон на основе [node-addon-api](https://github.com/nodejs/node-addon-api). 
+This addon allows you to call C++ methods of the library from NodeJS. Written with [node-addon-api](https://github.com/nodejs/node-addon-api). 
 **Node.JS version 10+ required**
 
-Сборка аддона:
-В файле `binding.gyp` указать верный путь к библиотеке libecc.so
+Build addon from sources:
+**Note.** Make sure your NodeJS and `libecc` library have the same platform (x86, x64).
+
+In file `binding.gyp` set **your** path to `libecc.so`. In Windows it is `libecc.lib` path
 ```
 ...
-	"libraries": [ "../lib-crypto/crypto/libecc.so" ]
+  "libraries": [ "../lib-crypto/crypto/libecc.so" ]
 ...
 ```
-В файле `node-bignumber.h` указать верный путь к заголовку `crypto.h`
+In file `node-bignumber.h` set **your** path to `crypto.h`
 
 `#include "../lib-crypto/crypto.h"`
 
-Сборка и запуск примера
+Build and run test example:
 ```
 cd node-addon
 npm install
