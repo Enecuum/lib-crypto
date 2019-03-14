@@ -11,6 +11,15 @@ Curve::Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber g
 		this->a = a;
 		this->gx = gx;
 		this->gy = gy;
+		EC_POINT *G;
+
+		if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, NULL))) return;
+
+		/* Create the generator */
+		if (NULL == (G = EC_POINT_new(curve)))return;
+		if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, NULL))
+			return;
+		this->G = G;
 	}
 Curve::~Curve(){}
 

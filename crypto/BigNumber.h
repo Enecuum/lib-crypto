@@ -1,14 +1,18 @@
 #pragma once
 
-#ifdef CRYPTOLIBRARY_EXPORTS
-#define  CRYPTOLIBRARY_API __declspec(dllexport)
+#ifdef _WIN32
+# ifdef WIN_EXPORT
+#   define EXPORTED  __declspec( dllexport )
+# else
+#   define EXPORTED  __declspec( dllimport )
+# endif
 #else
-#define  CRYPTOLIBRARY_API __declspec(dllimport)
+# define EXPORTED
 #endif
 
 #include <openssl/bn.h>
 
-class CRYPTOLIBRARY_API BigNumber
+class EXPORTED BigNumber
 {
 public:
 	BigNumber();

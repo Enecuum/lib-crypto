@@ -53,6 +53,11 @@ int operator == (const BigNumber &a, const BigNumber &b)
 	//	return 0;
 }
 
+/* @brief Modulo operation
+	@param BigNumber nom
+	@param BigNumber den
+	@param BigNumber mod
+*/
 BigNumber mdiv(BigNumber nom, BigNumber den, BigNumber mod) {
 	BIGNUM *r = BN_new();
 	if (NULL == (BN_mod_inverse(r, den.bn, BigNumber(mod).bn, ctx)))
@@ -64,6 +69,7 @@ BigNumber mdiv(BigNumber nom, BigNumber den, BigNumber mod) {
 	return BigNumber(r);
 }
 
+//
 BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
 	BIGNUM *r = BN_new();
 	if (!BN_mod_sub(r, a.bn, b.bn, m.bn, ctx))
@@ -101,7 +107,13 @@ EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q
 	return secret;
 }
 
+EC_POINT* hashToPoint(BigNumber hash, Curve *curve) {
+	EC_POINT *ret = mul(hash, curve->G, curve);
+	return ret;
+}
+
 vector<int> generatePoly(int power) {
+	//srand(time(0));
 	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
 	vector<int> arrayA = { 1, 8, 6, 5, 10 };
 	return arrayA;
@@ -109,7 +121,7 @@ vector<int> generatePoly(int power) {
 
 vector<BigNumber> shamir(BigNumber secretM, int participantN, int sufficientK, BigNumber q)
 {
-	srand(time(0));
+	
 	//secretM = 10;
 	//participantN = 10;
 	//sufficientK = 6;
@@ -130,10 +142,10 @@ vector<BigNumber> shamir(BigNumber secretM, int participantN, int sufficientK, B
 }
 
 /* Get shadows of secret key (ss_i = coalition[i] * Q)*/
-vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *G, Curve *curve) {
+vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *Q, Curve *curve) {
 	vector<EC_POINT*> res;
 	for (int i = 0; i < coalition.size(); i++) {
-		EC_POINT *p = mul(shares[coalition[i] - 1].bn, G, curve);
+		EC_POINT *p = mul(shares[coalition[i] - 1].bn, Q, curve);
 		res.push_back(p);
 	}
 	return res;
@@ -152,11 +164,14 @@ void getHash() {
 void handleErrors()
 {
 	printf("\n%s\n", ERR_error_string(ERR_get_error(), NULL));
+	throw ERR_get_error();
 	//system("pause");
-	abort();
+	//abort();
 }
 
-
+int test(int a, int b) {
+	throw 1;
+}
 
 void printBN(char* desc, BIGNUM * bn) {
 	fprintf(stdout, "%s", desc);

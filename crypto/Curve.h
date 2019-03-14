@@ -1,15 +1,19 @@
 #pragma once
 
-#ifdef CRYPTOLIBRARY_EXPORTS
-#define  CRYPTOLIBRARY_API __declspec(dllexport)
+#ifdef _WIN32
+# ifdef WIN_EXPORT
+#   define EXPORTED  __declspec( dllexport )
+# else
+#   define EXPORTED  __declspec( dllimport )
+# endif
 #else
-#define  CRYPTOLIBRARY_API __declspec(dllimport)
+# define EXPORTED
 #endif
 
 #include <openssl/ec.h>
 #include "BigNumber.h"
 
-class CRYPTOLIBRARY_API Curve
+class EXPORTED Curve
 {
 public:
 	Curve();
@@ -23,6 +27,7 @@ public:
 	BigNumber gx;
 	BigNumber gy;
 	EC_GROUP *curve;
+	EC_POINT *G;
 };
 EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
 
