@@ -1,3 +1,4 @@
+
 # lib-crypto
 
 Enecuum C++ library for Elliptic Curve cryptography. Based on OpenSSL EC methods.
@@ -35,11 +36,12 @@ g++ -fPIC *.cpp -shared -o libecc.so
 ### Usage (Windows)
 There is `.sln` solution for Visual Studo 2017. 
 First, download [OpenSSL v1.1.1](https://slproweb.com/products/Win32OpenSSL.html).
-In project Properties set correct paths
-`[C/C++ -> General -> Additional Include Directories]` : OpenSSL’s include directory (e.g C:\openssl\include)
-`[Linker -> General -> Additional Library Directories]` : OpenSSL’s lib directory (e.g C:\openssl\lib)
-`[Linker -> Input -> Additional Dependencies]` : libcrypto.lib
-
+In project Properties set correct paths:
+```
+[C/C++ -> General -> Additional Include Directories]` : OpenSSL’s include directory (e.g C:\openssl\include)
+[Linker -> General -> Additional Library Directories]` : OpenSSL’s lib directory (e.g C:\openssl\lib)
+[Linker -> Input -> Additional Dependencies]` : libcrypto.lib
+```
 To build test app simply use `main.cpp` as example.
 In case of error **"No openssl_applink"** go to `[C/C++ -> Code generation -> Runtime library ]` and set value as `/MD`
 To build DLL setup project configuration for dll.
