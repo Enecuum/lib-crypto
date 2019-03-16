@@ -58,37 +58,69 @@ Creates a point on a elliptic curve
 <a name="xy"></a>
 #### xy
 ```js
-let pt = addon.xy(1, 1, curve)
+let pt = addon.Point(1, 1, curve)
 pt.value()
 > (1 : 1)
 ````
 Returns a string with point's coordinates.
 <a name="mul"></a>
 #### mul
-Wrap of [mul](../cppapi.md#mul)
+Wrap of [mul](../doc/cppapi.md#mul)
 <a name="getrandom"></a>
 #### getRandom
-Wrap of [getRandom](../cppapi.md#getrandom)
+Wrap of [getRandom](../doc/cppapi.md#getrandom)
 <a name="creatempk"></a>
 #### createMPK
-Wrap of [createMPK](../cppapi.md#creatempk)
+Wrap of [createMPK](../doc/cppapi.md#creatempk)
 <a name="shamir"></a>
 #### shamir
-Wrap of [shamir](../cppapi.md#shamir)
+Wrap of [shamir](../doc/cppapi.md#shamir)
 <a name="keyproj"></a>
 #### keyProj
-Wrap of [keyProj](../cppapi.md#keyproj)
+Wrap of [keyProj](../doc/cppapi.md#keyproj)
 <a name="keyrecovery"></a>
 #### keyRecovery
-Wrap of [keyRecovery](../cppapi.md#keyrecovery)
+Wrap of [keyRecovery](../doc/cppapi.md#keyrecovery)
 <a name="weilpairing"></a>
 #### weilPairing
-Wrap of [weilPairing](../cppapi.md#weilpairing)
+Wrap of [weilPairing](../doc/cppapi.md#weilpairing)
 
 This functions are in progress 
 #### mmul
+```js
+addon.mmul(a, b, p);
+````
+Modular multiplication. `a * b mod p`. Wrap of `*` operator of `BigNumber`
 #### addPoints
+```js
+addon.addPoints(Point a, Point b, Curve curve)
+````
+Adds two points of elliptic curve
 #### hashToPoint
+
 #### createPK
+```js
+addon.createPK(pkey, G, curve)
+````
+Generates PK_LPoS = hash(kblockID || ID_LPoS) * G
 #### keySharing
+```js
+addon.keySharing(coalition, Q, msk, curve)
+````
+Returns an array of key shares. Result od `Shamir` and `KeyProj` work. This is just an wxample, because this functions are running separately in different nodes.
 #### sign
+```js
+addon.sign(kblock, LPoSID, G, G0, secret, curve)
+```
+Returns an object of signature
+```js
+{
+  s1 : R = randomPoint * G0,
+  s2 : S = randomPoint * H + SK_LPoS
+}
+```
+#### verify
+```js
+addon.verify(sign, G, G0, MPK, kblock, LPoSID, p, curve)
+```
+Verify block signature. Runs on every node with public paramaters. Should be simplified later.

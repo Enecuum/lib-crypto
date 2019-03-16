@@ -1,6 +1,4 @@
-
 #include <napi.h>
-
 #include "node-bignumber.h"
 
 NodePT::NodePT(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NodePT>(info) {

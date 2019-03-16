@@ -21,6 +21,8 @@ class NCurve : public Napi::ObjectWrap<NCurve> {
 		static Napi::Object NewInstance(Napi::Value arg);
 		NCurve(const Napi::CallbackInfo& info);
 		Curve crv;
+		NodePT G0;
+		NodePT G;
 	private:
 		static Napi::FunctionReference constructor;
 		Napi::Value GetValue(const Napi::CallbackInfo& info);

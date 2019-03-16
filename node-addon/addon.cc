@@ -1,7 +1,7 @@
 #include <napi.h>
 #include "node-bignumber.h"
 
-using namespace Napi;
+//using namespace Napi;
 
 Napi::Object BNumber(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
@@ -91,13 +91,27 @@ Napi::Object Mul(const Napi::CallbackInfo& info) {
 	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
+Napi::Object HashToPoint(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[1].As<Napi::Object>());
+
+	EC_POINT *res = mul(a->bn, curve->crv.G, &curve->crv);
+	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+}
+
 Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
-	
-	EC_POINT *res = createMPK(a->bn, P->p, &curve->crv);
+	EC_POINT *res;
+	try{
+		res = createMPK(a->bn, P->p, &curve->crv);
+	}
+	catch(unsigned long err){
+        Napi::Error::New(env, ERR_error_string(err, NULL)).ThrowAsJavaScriptException();
+    }
   	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
@@ -213,6 +227,8 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 		Napi::Function::New(env, KeyRecovery));
 	exports.Set(Napi::String::New(env, "addPoints"),
 		Napi::Function::New(env, AddPoints));
+	exports.Set(Napi::String::New(env, "hashToPoint"),
+		Napi::Function::New(env, HashToPoint));
 	exports.Set(Napi::String::New(env, "weilPairing"),
 		Napi::Function::New(env, WeilPairing));
 	exports.Set(Napi::String::New(env, "getRandom"),
