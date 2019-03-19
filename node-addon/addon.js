@@ -1,5 +1,5 @@
 //let addon = require('./node_modules/win64/addon');
-let addon = require('./node_modules/win64/addon');
+let addon = require('./node_modules/enecuum-crypto/addon');
 var crypto = require('crypto');
 
 module.exports = addon;
