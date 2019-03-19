@@ -1,10 +1,6 @@
 var addon = require('./addon');
 
 
-
-
-
-
 var number = [ 0x4, 0x86 ];
 	var test = addon.BigNumber(number);
 
@@ -66,7 +62,6 @@ console.log("Creating curve");
 
 	console.log("Create signature");
 
-	//var M = addon.BigNumber(200);
 	let sign = addon.sign(kblock, LPoSID, G, G0, secret, curve);
 
 	console.log("S1: " + sign.s1.xy(curve));

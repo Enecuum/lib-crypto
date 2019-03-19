@@ -1,7 +1,7 @@
 #pragma once
 
 #include <napi.h>
-#include "ecc/crypto/crypto.h"
+#include "../../inc/crypto.h"
 
 class NodeBN : public Napi::ObjectWrap<NodeBN> {
 	public:
@@ -21,8 +21,6 @@ class NCurve : public Napi::ObjectWrap<NCurve> {
 		static Napi::Object NewInstance(Napi::Value arg);
 		NCurve(const Napi::CallbackInfo& info);
 		Curve crv;
-		NodePT G0;
-		NodePT G;
 	private:
 		static Napi::FunctionReference constructor;
 		Napi::Value GetValue(const Napi::CallbackInfo& info);

@@ -19,11 +19,10 @@ NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) 
     try{
         //int i = test(1, 2);
         printPoint(curve.G, &curve);
-        std::cout << "Caught NAPI exception\n";
     }
-    catch(...){
+    catch(unsigned long err){
         //Napi::Error::New(env, "ass").ThrowAsJavaScriptException();
-        throw Napi::Error::New(env, "Example exception");
+        throw Napi::Error::New(env, ERR_error_string(err, NULL));
     }
 
 };

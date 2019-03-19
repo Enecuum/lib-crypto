@@ -17,8 +17,7 @@
       'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
       "target_name": "addon",
       "sources": [  "addon.cc", "node-bignumber.cc", "node-point.cc" , "node-curve.cc"  ],
-      "libraries": [ "../ecc/x64/dll/crypto.lib" ],
-      
+      "libraries": [ "../../../x64/dll/crypto.lib" ],
     }
   ]
 }

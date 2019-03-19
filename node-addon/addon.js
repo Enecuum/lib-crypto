@@ -1,5 +1,5 @@
-let addon = require('./build/Release/addon');
-
+//let addon = require('./node_modules/win64/addon');
+let addon = require('./node_modules/win64/addon');
 var crypto = require('crypto');
 
 module.exports = addon;

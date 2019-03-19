@@ -15,8 +15,6 @@ Napi::Object BNumber(const Napi::CallbackInfo& info) {
 		for(int i  = 0; i < a.Length(); i++){
 			Napi::Value val = a[i];
 			int ival = val.ToNumber();
-			//std::string s = std::to_string(buf[0]);
-			//Napi::Error::New(env, s).ThrowAsJavaScriptException();
 			buf[i] = (unsigned char)ival;
 		}
 

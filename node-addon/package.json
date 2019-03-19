@@ -2,19 +2,18 @@
   "name": "node-addon",
   "version": "1.0.0",
   "description": "",
-  "main": "addon.js",
+  "main": "index.js",
   "dependencies": {
-    "bindings": "^1.4.0",
     "crypto": "^1.0.1",
-    "node-addon-api": "^1.6.2"
+    "win64": "https://github.com/prudanoff/enecuum-bin/raw/master/bin/win64/enecuum-crypto.tar.gz"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node-gyp rebuild"
+    "install": "node install.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "gypfile": true
+  "license": "ISC"
 }
