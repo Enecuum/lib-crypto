@@ -39,13 +39,12 @@ module.exports.getHash = function (str){
 	 return crypto.createHash('sha1').update(str).digest('hex');
 } 
 
-module.exports.verify = function (sign, G, G0, MPK, kblock, leadID, p, curve){
+module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 	var sx = addon.BigNumber(0);
 	var sy = addon.BigNumber(522);
 	var S = addon.Point(sx, sy, curve)
 
-	var H = hash(kblock.m.toString() + leadID.toString(), G, curve);
-	let Q = createPK(kblock.id.toString() + leadID.toString(), G, curve);
+	var H = hash(M.toString() + leadID.toString(), G, curve);
 
 	var r1 = addon.weilPairing(G0, sign.s2, S, curve);
 	console.log("r1 = e(P, S):\t" + r1.value());

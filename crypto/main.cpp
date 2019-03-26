@@ -7,8 +7,6 @@
 #include "crypto.h"
 using namespace std;
 
-
-
 class Point
 {
 	private:
@@ -54,7 +52,7 @@ int main(int argc, char ** argv)
 	//if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
 	//	std::cout << "error" << endl;
 
-	BigNumber msk(10);// = getRandom(BigNumber(1223));
+	BigNumber msk(8);// = getRandom(BigNumber(1223));
 	cout << "MSK: " << msk.decimal() << endl;
 	BigNumber q(13);	// G0 order
 	unsigned char ch[2] = { 0x4, 0x86 };
@@ -88,7 +86,7 @@ int main(int argc, char ** argv)
 	int KblockID = 123;
 	int LPoSID = 677321;
 	// r следует брать соучайно r = ZZ.random_element(q)
-	BigNumber r = getRandom(q);
+	BigNumber r(7);// = getRandom(q);
 
 	std::cout << "Random r: " << r.decimal() << endl;
 	EC_POINT *Q = mul(r, G, curve);
@@ -97,19 +95,20 @@ int main(int argc, char ** argv)
 	printPoint(Q, curve);
 
 	std::cout << "Key sharing: " << endl;
-	vector<BigNumber> shares = shamir(msk, 10, 6, q);
+	vector<int> ids = { 1, 55, 10 };
+	vector<BigNumber> shares = shamir(msk, ids, 3, 2, q);
 	for (int i = 0; i < shares.size(); i++)
 		std::cout << "(" << shares[i].decimal() << "), ";
 
-	vector<int> coalition = { 1,3,5,7,9,10 };
+	vector<int> coalition = {1, 3 };
 	std::cout << "\r\nShadows: " << "\r\n";
 	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve);
 	for (int i = 0; i < proj.size(); i++) {
 		printPoint(proj[i], curve);
 	}
-
+	vector<int> coalition2 = { 1, 10 };
 	std::cout << "\r\n      Key recovery" << endl;
-	EC_POINT *secret = keyRecovery(proj, coalition, q, curve);
+	EC_POINT *secret = keyRecovery(proj, coalition2, q, curve);
 
 	std::cout << "Recovered secret SK: \t";
 	printPoint(secret, curve);
@@ -121,7 +120,7 @@ int main(int argc, char ** argv)
 	std::cout << "\r\n      Create signature" << endl;
 
 	BigNumber M(200);
-	BigNumber r2 = getRandom(q);
+	BigNumber r2(7);// = getRandom(q);
 	cout << "r2: " << r2.decimal() << endl;
 	EC_POINT *s1;
 	// R = rP
@@ -135,11 +134,10 @@ int main(int argc, char ** argv)
 	// Тут хеширование, но пока берется "случайная" точка кривой
 	
 	
-	BigNumber hx(681);
-	BigNumber hy(256);
-	EC_POINT *H = EC_POINT_new(curve->curve);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, H, hx.bn, hy.bn, NULL)) handleErrors();
-
+	//BigNumber hx(681);
+	//BigNumber hy(256);
+	EC_POINT *H = hashToPoint(BigNumber(7), curve);
+	printPoint(H, curve);
 	// S2 = r*H + SecKey
 	// S = sQ + rH
 	EC_POINT *s2 = mul(r2, H, curve);
