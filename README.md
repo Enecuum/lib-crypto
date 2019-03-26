@@ -50,13 +50,21 @@ To build DLL setup project configuration for dll.
 This addon allows you to call C++ methods of the library from NodeJS. Written with [node-addon-api](https://github.com/nodejs/node-addon-api). 
 **Node.JS version 10+ required**
 
-Build addon from sources:
-**Note.** Make sure your NodeJS and `libecc` library have the same platform (x86, x64).
+#### Simple usage
+```
+cd node-addon
+npm install
+node index.js
+```
+This will download a pre-built files from another repo as npm-packet depends of your platform. If you have any issues with this way, you should build from sources.
+#### Build addon from sources:
 
-In file `binding.gyp` set **your** path to `libecc.so`. In Windows it is `libecc.lib` path
+**Note.** Make sure your NodeJS and `libecc.so` library have the same platform (x86, x64).
+
+In file `binding.gyp` set **absolute** path to `libecc.so`. In Windows it is `libecc.lib` path
 ```
 ...
-  "libraries": [ "../lib-crypto/crypto/libecc.so" ]
+  "libraries": [ "/home/user/lib-crypto/crypto/libecc.so" ]
 ...
 ```
 In file `node-bignumber.h` set **your** path to `crypto.h`
@@ -65,7 +73,7 @@ In file `node-bignumber.h` set **your** path to `crypto.h`
 
 Build and run test example:
 ```
-cd node-addon
+cd node-addon/src
 npm install
 node ./addon.js
 ```

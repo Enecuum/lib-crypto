@@ -1,4 +1,4 @@
-//let addon = require('./node_modules/win64/addon');
+//let addon = require('./Build/Release/addon');
 let addon = require('./node_modules/enecuum-crypto/addon');
 var crypto = require('crypto');
 
@@ -31,7 +31,7 @@ function createPK(pkey, G, curve){
 	var r = addon.BigNumber(7);
 	
 	var Q = addon.mul(r, G, curve);
-	console.log("Q: " + Q.xy(curve)); // 30
+	//console.log("Q: " + Q.xy(curve)); // 30
 	return Q; //hash(pkey, curve);
 } 
 
@@ -73,13 +73,13 @@ module.exports.keySharing = function (coalition, Q, msk, curve){
 	return proj;
 }
 
-module.exports.sign = function (kblock, leadID, G, G0, secret, curve){
+module.exports.sign = function (M, leadID, G, G0, secret, curve){
 	var r2 = addon.BigNumber(7);//addon.getRandom(q);
 	//console.log("r2: " + r2.value());
 
 	var s1 = addon.mul(r2, G0, curve);
 
-	var H = hash(kblock.m.toString() + leadID.toString(), G, curve);
+	var H = hash(M.toString() + leadID.toString(), G, curve);
 
 	// S2 = r*H + SecKey
 	// S = sQ + rH

@@ -115,27 +115,27 @@ EC_POINT* hashToPoint(BigNumber hash, Curve *curve) {
 vector<int> generatePoly(int power) {
 	//srand(time(0));
 	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
-	vector<int> arrayA = { 1, 8, 6, 5, 10 };
+	vector<int> arrayA = { 10 };
 	return arrayA;
 }
 
-vector<BigNumber> shamir(BigNumber secretM, int participantN, int sufficientK, BigNumber q)
+vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, int sufficientK, BigNumber q)
 {
 	
 	//secretM = 10;
 	//participantN = 10;
 	//sufficientK = 6;
 
-	const int power = sufficientK - 1;
+	int power = sufficientK - 1;
 
 	vector<int> arrayA = generatePoly(power);
 
 	vector<BigNumber> arrayK;
-	for (int i = 0; i < participantN; i++)
+	for (int i = 0; i < ids.size(); i++)
 	{
 		int temp = 0;
 		for (int j = 0; j < power; j++)
-			temp += arrayA[j] * (pow(i + 1, power - j));
+			temp += arrayA[j] * (pow(ids[i], power - j));
 		arrayK.insert(arrayK.end(), (BigNumber(temp) + secretM) % q);
 	}
 	return arrayK;

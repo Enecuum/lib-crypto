@@ -116,10 +116,16 @@ Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
 Napi::Array Shamir(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	NodeBN* secret = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-	int n = info[1].As<Napi::Number>().Int32Value();
-	int k = info[2].As<Napi::Number>().Int32Value();
-	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
-	std::vector<BigNumber> shares = shamir(secret->bn, n, k, q->bn);
+	Napi::Array nids = info[1].As<Napi::Array>();
+	int n = info[2].As<Napi::Number>().Int32Value();
+	int k = info[3].As<Napi::Number>().Int32Value();
+	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
+	
+	std::vector<int> ids;
+	for(uint32_t i  = 0; i < nids.Length(); i++){
+		ids.push_back(nids.Get(i).As<Napi::Number>().Int32Value());
+	}
+	std::vector<BigNumber> shares = shamir(secret->bn, ids, n, k, q->bn);
 
 	Napi::Array res = Napi::Array::New(env, shares.size());
 	for(uint32_t i  = 0; i < shares.size(); i++){
