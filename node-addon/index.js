@@ -44,16 +44,18 @@ console.log("Creating curve");
 	console.log("Q: " + Q.xy(curve));
 
 	console.log("PKG keys generation");	
+	
+	let ids = [1, 55, 10]
+	var coalition = [ 1, 2 ];
+	var participants = [ 1, 55, 10 ];
 
-	var coalition = [ 1,3,5,7,9,10 ];
-
-	var proj = addon.keySharing(coalition, Q, msk, curve);
+	var proj = addon.keySharing(coalition, ids, Q, msk, curve);
 	console.log("Key shadows");
 	for (var i = 0; i < proj.length; i++){
 		console.log(proj[i].xy(curve));
 	}
 
-	var secret = addon.keyRecovery(proj, coalition, q, curve);
+	var secret = addon.keyRecovery(proj, participants, q, curve);
 
 	console.log("Recovered secret SK:\t" + secret.xy(curve));
 
@@ -62,7 +64,7 @@ console.log("Creating curve");
 
 	console.log("Create signature");
 
-	let sign = addon.sign(kblock, LPoSID, G, G0, secret, curve);
+	let sign = addon.sign(data, LPoSID, G, G0, secret, curve);
 
 	console.log("S1: " + sign.s1.xy(curve));
 	console.log("S2: " + sign.s2.xy(curve));
@@ -70,4 +72,4 @@ console.log("Creating curve");
 	console.log("-------- Verification");
 	console.log("Weil pairing");
 
-	console.log("Block verified: " + addon.verify(sign, G, G0, MPK, kblock, LPoSID, p, curve));
+	console.log("Block verified: " + addon.verify(sign, data, Q, G, G0, MPK, LPoSID, p, curve));

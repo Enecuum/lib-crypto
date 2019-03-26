@@ -16,14 +16,14 @@ NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) 
     Curve curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
     this->crv = curve;
     
-    try{
-        //int i = test(1, 2);
-        printPoint(curve.G, &curve);
-    }
-    catch(unsigned long err){
-        //Napi::Error::New(env, "ass").ThrowAsJavaScriptException();
-        throw Napi::Error::New(env, ERR_error_string(err, NULL));
-    }
+    // try{
+    //     //int i = test(1, 2);
+    //     printPoint(curve.G, &curve);
+    // }
+    // catch(unsigned long err){
+    //     //Napi::Error::New(env, "ass").ThrowAsJavaScriptException();
+    //     throw Napi::Error::New(env, ERR_error_string(err, NULL));
+    // }
 
 };
 
