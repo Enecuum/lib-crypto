@@ -59,10 +59,26 @@ Creates a point on a elliptic curve
 #### xy
 ```js
 let pt = addon.Point(1, 1, curve)
-pt.value()
+pt.xy(curve)
 > (1 : 1)
 ````
 Returns a string with point's coordinates.
+<a name="x"></a>
+#### x
+```js
+let pt = addon.Point(1, 2, curve)
+pt.x(curve)
+> 1
+````
+Returns a X coordinate in decimal format.
+<a name="y"></a>
+#### y
+```js
+let pt = addon.Point(1, 2, curve)
+pt.y(curve)
+> 2
+````
+Returns a Y coordinate in decimal format.
 <a name="mul"></a>
 #### mul
 Wrap of [mul](../doc/cppapi.md#mul)
@@ -102,7 +118,7 @@ Adds two points of elliptic curve
 ```js
 addon.createPK(pkey, G, curve)
 ````
-Generates PK_LPoS = hash(kblockID || ID_LPoS) * G
+Uses to generate PK_LPoS. Returns `pkey * G`
 #### keySharing
 ```js
 addon.keySharing(coalition, Q, msk, curve)
@@ -110,17 +126,41 @@ addon.keySharing(coalition, Q, msk, curve)
 Returns an array of key shares. Result od `Shamir` and `KeyProj` work. This is just an wxample, because this functions are running separately in different nodes.
 #### sign
 ```js
-addon.sign(kblock, LPoSID, G, G0, secret, curve)
+addon.sign(M, leadID, G, G0, secret, curve)
 ```
-Returns an object of signature
+Sing a `M` message. Returns an object of sign as two points coordinates
 ```js
-{
   s1 : R = randomPoint * G0,
   s2 : S = randomPoint * H + SK_LPoS
+Returned object:
+{
+	s1 : {
+		p : s1,
+		x : decimal,
+		y : decimal
+	},
+	s2 : {
+		p : s2,
+		x : decimal,
+		y : decimal
+	}
 }
 ```
 #### verify
 ```js
-addon.verify(sign, G, G0, MPK, kblock, LPoSID, p, curve)
+addon.verify(sign, M, Q, G, G0, MPK, leadID, p, curve)
 ```
-Verify block signature. Runs on every node with public paramaters. Should be simplified later.
+Verify signature `sign` of message `M`. Runs on every node with public paramaters. Should be simplified later.
+`sign` is an object such as:
+```js
+{
+	"r":{
+		"x": decimal,
+		"y": decimal
+	},
+	"s":{
+		"x": decimal,
+		"y": decimal
+	}
+}
+```
