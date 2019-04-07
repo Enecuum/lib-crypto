@@ -10,7 +10,7 @@ module.exports.getHash = getHash;
 function hash(hash, G, curve){
 	//console.log("hash: " + hash); // 30
 	
-	let slice = hash.slice(0, 1);
+	let slice = hash.slice(0, 5);
 	//console.log(parseInt(slice, 16)); // 30
 	let r = addon.BigNumber(parseInt(slice, 16));
 	// console.log(num); // 30
@@ -30,9 +30,10 @@ function hash(hash, G, curve){
 
 function createPK(pkey, G, curve){
 	//var r = addon.BigNumber(9);//addon.getRandom(obj1);
-	let slice = pkey.slice(0, 1);
+	let slice = pkey.slice(0, 5);
+	//console.log(slice)
 	let r = addon.BigNumber(parseInt(slice, 16));
-
+	
 	//var r = addon.BigNumber(7);
 	
 	var Q = addon.mul(r, G, curve);
@@ -51,13 +52,16 @@ module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 
 	var H = hash(getHash(M.toString() + leadID.toString()), G, curve);
 
-	var r1 = addon.weilPairing(G0, sign.s2, S, curve);
+	var s1 = addon.Point(addon.BigNumber(sign.r.x), addon.BigNumber(sign.r.y), curve)
+	var s2 = addon.Point(addon.BigNumber(sign.s.x), addon.BigNumber(sign.s.y), curve)
+
+	var r1 = addon.weilPairing(G0, s2, S, curve);
 	//console.log("r1 = e(P, S):\t" + r1.value());
 
 	var b1 = addon.weilPairing(MPK, Q, S, curve);
 	//console.log("b1 = e(MPK, Q):\t" + b1.value());
 
-	var c1 = addon.weilPairing(sign.s1, H, S, curve);
+	var c1 = addon.weilPairing(s1, H, S, curve);
 	//console.log("c1 = e(R, H1):\t" + c1.value());
 	
 	var b1c1 = addon.mmul(b1, c1, p);
@@ -89,7 +93,15 @@ module.exports.sign = function (M, leadID, G, G0, secret, curve){
 	var s2 = addon.mul(r2, H, curve);
 	s2 = addon.addPoints(s2, secret, curve);
 	return {
-		s1 : s1,
-		s2 : s2
+		s1 : {
+			p : s1,
+			x : s1.x(curve),
+			y : s1.y(curve)
+		},
+		s2 : {
+			p : s2,
+			x : s2.x(curve),
+			y : s2.y(curve)
+		}
 	};
 }

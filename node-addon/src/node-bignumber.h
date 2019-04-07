@@ -1,7 +1,7 @@
 #pragma once
 
 #include <napi.h>
-#include "../../inc/crypto.h"
+#include "ecc/inc/crypto.h"
 
 class NodeBN : public Napi::ObjectWrap<NodeBN> {
 	public:
@@ -36,4 +36,6 @@ class NodePT : public Napi::ObjectWrap<NodePT> {
 		static Napi::FunctionReference constructor;
 		Napi::Value GetCoords(const Napi::CallbackInfo& info);
 		Napi::Value SetCoords(const Napi::CallbackInfo& info);
+		Napi::Value getX(const Napi::CallbackInfo& info);
+		Napi::Value getY(const Napi::CallbackInfo& info);
 };

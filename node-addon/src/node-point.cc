@@ -15,7 +15,9 @@ void NodePT::Init(Napi::Env env, Napi::Object exports) {
 
     Napi::Function func = DefineClass(env, "NodePT", {
         InstanceMethod("xy", &NodePT::GetCoords),
-        InstanceMethod("SetCoords", &NodePT::SetCoords)
+        InstanceMethod("SetCoords", &NodePT::SetCoords),
+        InstanceMethod("x", &NodePT::getX),
+        InstanceMethod("y", &NodePT::getY),
     });
 
     constructor = Napi::Persistent(func);
@@ -48,4 +50,24 @@ Napi::Value NodePT::SetCoords(const Napi::CallbackInfo& info) {
     if (1 != EC_POINT_set_affine_coordinates_GFp(curve->crv.curve, this->p, x->bn.bn, y->bn.bn, NULL))
         Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
     return Napi::Number::New(info.Env(), 1);
+}
+
+Napi::Value NodePT::getX(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    BigNumber x;
+    BigNumber y;
+    NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
+    if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, this->p, x.bn, y.bn, NULL))
+        Napi::Error::New(env, "getX EC_POINT_new error").ThrowAsJavaScriptException();
+    return Napi::Number::New(info.Env(), x.decimal());
+}
+
+Napi::Value NodePT::getY(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    BigNumber x;
+    BigNumber y;
+    NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
+    if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, this->p, x.bn, y.bn, NULL))
+        Napi::Error::New(env, "getY EC_POINT_new error").ThrowAsJavaScriptException();
+    return Napi::Number::New(info.Env(), y.decimal());
 }
