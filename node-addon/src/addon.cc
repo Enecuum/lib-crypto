@@ -1,31 +1,47 @@
 #include <napi.h>
 #include "node-bignumber.h"
-//#include "ecc/crypto/crypto.h"
-#include <iostream> 
-using namespace Napi;
+
+//using namespace Napi;
 
 Napi::Object BNumber(const Napi::CallbackInfo& info) {
-	BigNumber bn(info[0].As<Napi::Number>().Int32Value());
-	//auto instance = Page::constructor.New({  });
-  return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+	Napi::Env env = info.Env();
+	//BigNumber bn;
+	if(info[0].IsObject()){
+		Napi::Array a = info[0].As<Napi::Array>();
+		//Napi::Error::New(env, "qweqweqwe").ThrowAsJavaScriptException();
+		//std::vector<unsigned char> buf(a.Length());
+		std::vector<unsigned char> buf(a.Length());
+		//int len = a.Length();
+		for(int i  = 0; i < a.Length(); i++){
+			Napi::Value val = a[i];
+			int ival = val.ToNumber();
+			buf[i] = (unsigned char)ival;
+		}
+
+		BigNumber bn(&buf[0], a.Length());
+		return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+	}
+	if (info[0].IsNumber()){
+		BigNumber bn(info[0].As<Napi::Number>().Int32Value());
+		return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+	}
+	Napi::Error::New(env, std::to_string(info[0].Type())).ThrowAsJavaScriptException();
+	//
+	return Napi::Object::New(info.Env());
+	
 }
 
 Napi::Object Point(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  NodeBN* x = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-  NodeBN* y = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
-	  NCurve* curve1 = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
-  //int len = (int)curve1->d;
-  //Napi::Error::New(env, std::to_string(len)).ThrowAsJavaScriptException();
-
-   EC_POINT *res;
- if (NULL == (res = EC_POINT_new(curve1->crv)))
-  Napi::Error::New(env, "EC_POINT_new error").ThrowAsJavaScriptException();
-if (1 != EC_POINT_set_affine_coordinates_GFp(curve1->crv, res, x->bn.bn, y->bn.bn, NULL))
-    Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
-
-
-  return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+	Napi::Env env = info.Env();
+	NodeBN* x = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+	NodeBN* y = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
+	NCurve* curve1 = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
+	EC_POINT *res;
+	if (NULL == (res = EC_POINT_new(curve1->crv.curve)))
+		Napi::Error::New(env, "EC_POINT_new error").ThrowAsJavaScriptException();
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve1->crv.curve, res, x->bn.bn, y->bn.bn, NULL))
+		Napi::Error::New(env, "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
+	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 // Napi::Object Curve(const Napi::CallbackInfo& info) {
@@ -33,12 +49,12 @@ if (1 != EC_POINT_set_affine_coordinates_GFp(curve1->crv, res, x->bn.bn, y->bn.b
 // }
 
 Napi::Object Add(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-  NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
+	Napi::Env env = info.Env();
+	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+	NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
 
-  BigNumber res = a->bn + b->bn;
-  return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
+	BigNumber res = a->bn + b->bn;
+	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
 Napi::Object Mmul(const Napi::CallbackInfo& info) {
@@ -51,38 +67,35 @@ Napi::Object Mmul(const Napi::CallbackInfo& info) {
 	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
-Napi::Object PtAdd(const Napi::CallbackInfo& info) {
+Napi::Object AddPoints(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	NodePT* a = Napi::ObjectWrap<NodePT>::Unwrap(info[0].As<Napi::Object>());
 	NodePT* b = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
 
-   EC_POINT *res;
-	if (1 != EC_POINT_add(curve->crv, res, a->p, b->p, NULL))
+   	EC_POINT *res = EC_POINT_new(curve->crv.curve);
+	if (1 != EC_POINT_add(curve->crv.curve, res, a->p, b->p, NULL))
 		Napi::Error::New(env, "EC_POINT_add error").ThrowAsJavaScriptException();
-//if (!res)
-	//Napi::Error::New(env, "EC_POINT_mul error").ThrowAsJavaScriptException();
-	 //EC_POINT *res = EC_POINT_new(curve->crv);
-	 //if (1 != EC_POINT_mul(curve->crv, res, NULL, P->p, a->bn.bn, NULL))
-	// 	Napi::Error::New(env, "EC_POINT_mul error").ThrowAsJavaScriptException();
-
-  return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+  	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object Mul(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-  NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
+	Napi::Env env = info.Env();
+	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+	NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
-  
-   EC_POINT *res = mul(a->bn, P->p, curve->crv);
-//if (!res)
-	//Napi::Error::New(env, "EC_POINT_mul error").ThrowAsJavaScriptException();
-	 //EC_POINT *res = EC_POINT_new(curve->crv);
-	 //if (1 != EC_POINT_mul(curve->crv, res, NULL, P->p, a->bn.bn, NULL))
-	// 	Napi::Error::New(env, "EC_POINT_mul error").ThrowAsJavaScriptException();
 
-  return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+	EC_POINT *res = mul(a->bn, P->p, &curve->crv);
+	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+}
+
+Napi::Object HashToPoint(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[1].As<Napi::Object>());
+
+	EC_POINT *res = mul(a->bn, curve->crv.G, &curve->crv);
+	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
@@ -90,32 +103,30 @@ Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
 	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
-	EC_POINT *res = createMPK(a->bn, P->p, curve->crv);
+	EC_POINT *res;
+	try{
+		res = createMPK(a->bn, P->p, &curve->crv);
+	}
+	catch(unsigned long err){
+        Napi::Error::New(env, ERR_error_string(err, NULL)).ThrowAsJavaScriptException();
+    }
   	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Array Shamir(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	NodeBN* secret = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-	int n = info[1].As<Napi::Number>().Int32Value();
-	int k = info[2].As<Napi::Number>().Int32Value();
-	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
-	//std::vector<BigNumber> shares = shamir(secret->bn, n, k, q->bn);
-	// ----------------------------------------------------------
-		const int power = k - 1;
-
-	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
-	std::vector<int> arrayA = { 1, 8, 6, 5, 10 };
-
-	std::vector<BigNumber> shares;
-	for (int i = 0; i < n; i++)
-	{
-		int temp = 0;
-		for (int j = 0; j < power; j++)
-			temp += arrayA[j] * (pow(i + 1, power - j));
-		shares.insert(shares.end(), (BigNumber(temp) + secret->bn) % q->bn);
+	Napi::Array nids = info[1].As<Napi::Array>();
+	int n = info[2].As<Napi::Number>().Int32Value();
+	int k = info[3].As<Napi::Number>().Int32Value();
+	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
+	
+	std::vector<int> ids;
+	for(uint32_t i  = 0; i < nids.Length(); i++){
+		ids.push_back(nids.Get(i).As<Napi::Number>().Int32Value());
 	}
-	//--------------------------------------------------------------------
+	std::vector<BigNumber> shares = shamir(secret->bn, ids, n, k, q->bn);
+
 	Napi::Array res = Napi::Array::New(env, shares.size());
 	for(uint32_t i  = 0; i < shares.size(); i++){
 		res.Set(i, NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &shares[i])));
@@ -141,7 +152,7 @@ Napi::Array KeyProj(const Napi::CallbackInfo& info) {
 		shares.push_back(number->bn);
 	}
 
-	std::vector<EC_POINT*> proj = keyProj(coalition, shares, P->p, curve->crv);
+	std::vector<EC_POINT*> proj = keyProj(coalition, shares, P->p, &curve->crv);
 	
 	Napi::Array res = Napi::Array::New(env, proj.size());
 	for(uint32_t i  = 0; i < proj.size(); i++){
@@ -169,8 +180,7 @@ Napi::Object KeyRecovery(const Napi::CallbackInfo& info) {
 		NodePT* pt = Napi::ObjectWrap<NodePT>::Unwrap(nproj.Get(i).As<Napi::Object>());
 		proj.push_back(pt->p);
 	}
-
-	EC_POINT* res = keyRecovery(proj, coalition, q->bn, curve->crv);
+	EC_POINT* res = keyRecovery(proj, coalition, q->bn, &curve->crv);
 
   	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
@@ -182,7 +192,7 @@ Napi::Object WeilPairing(const Napi::CallbackInfo& info) {
 	NodePT* S = Napi::ObjectWrap<NodePT>::Unwrap(info[2].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[3].As<Napi::Object>());
 	
-	BigNumber res = weilPairing(P->p, Q->p, S->p, curve->crv);
+	BigNumber res = weilPairing(P->p, Q->p, S->p, &curve->crv);
   	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
@@ -191,31 +201,8 @@ Napi::Object GetRandom(const Napi::CallbackInfo& info) {
   NodeBN* obj1 = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
   BigNumber bn = getRandom(obj1->bn);
 
-  //double sum = obj1->Val() + obj2->Val();
   return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
 }
-
-Napi::Number SetCurve(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  NodeBN* obj1 = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-  BigNumber bn = getRandom(obj1->bn);
-  
-  NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-  NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
-  NodeBN* p = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
-  NodeBN* order = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
-  NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
-  NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
-
-  //EC_GROUP* curve = create_curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
-  //Napi::Object obj = constructor.New({ Napi::Number::New(info.Env(), this->value_ * multiple.DoubleValue()) });
-  //double sum = obj1->Val() + obj2->Val();
-  return Napi::Number::New(env, bn.decimal());
-}
-
-
-
-  // this->curve = create_curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 	NodeBN::Init(env, exports);
@@ -228,8 +215,8 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 		Napi::Function::New(env, Point));
 	// exports.Set(Napi::String::New(env, "Curve"),
 	//   Napi::Function::New(env, Curve));
-	exports.Set(Napi::String::New(env, "add"),
-		Napi::Function::New(env, Add));
+	// exports.Set(Napi::String::New(env, "add"),
+	// 	Napi::Function::New(env, Add));
 	exports.Set(Napi::String::New(env, "mul"),
 		Napi::Function::New(env, Mul));
 	exports.Set(Napi::String::New(env, "mmul"),
@@ -243,12 +230,11 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 	exports.Set(Napi::String::New(env, "keyRecovery"),
 		Napi::Function::New(env, KeyRecovery));
 	exports.Set(Napi::String::New(env, "addPoints"),
-		Napi::Function::New(env, PtAdd));
+		Napi::Function::New(env, AddPoints));
+	exports.Set(Napi::String::New(env, "hashToPoint"),
+		Napi::Function::New(env, HashToPoint));
 	exports.Set(Napi::String::New(env, "weilPairing"),
 		Napi::Function::New(env, WeilPairing));
-
-	// exports.Set(Napi::String::New(env, "setCurve"),
-	//   Napi::Function::New(env, SetCurve));
 	exports.Set(Napi::String::New(env, "getRandom"),
 		Napi::Function::New(env, GetRandom));
 	return exports;
