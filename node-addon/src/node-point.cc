@@ -18,6 +18,7 @@ void NodePT::Init(Napi::Env env, Napi::Object exports) {
         InstanceMethod("SetCoords", &NodePT::SetCoords),
         InstanceMethod("x", &NodePT::getX),
         InstanceMethod("y", &NodePT::getY),
+        InstanceMethod("isInfinity", &NodePT::isInfinity)
     });
 
     constructor = Napi::Persistent(func);
@@ -70,4 +71,13 @@ Napi::Value NodePT::getY(const Napi::CallbackInfo& info) {
     if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, this->p, x.bn, y.bn, NULL))
         Napi::Error::New(env, "getY EC_POINT_new error").ThrowAsJavaScriptException();
     return Napi::Number::New(info.Env(), y.decimal());
+}
+
+Napi::Value NodePT::isInfinity(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
+    int ret = 0;
+    if (EC_POINT_is_at_infinity(curve->crv.curve, this->p))
+        ret = 1;
+    return Napi::Number::New(info.Env(), ret);
 }

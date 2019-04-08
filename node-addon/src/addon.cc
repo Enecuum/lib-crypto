@@ -44,9 +44,21 @@ Napi::Object Point(const Napi::CallbackInfo& info) {
 	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
-// Napi::Object Curve(const Napi::CallbackInfo& info) {
-//   return NCurve::NewInstance(info[0]);
-// }
+Napi::Object ECurve(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+    NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
+    NodeBN* p = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
+    NodeBN* order = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
+    NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
+    NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
+    
+    Curve cur(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
+    
+    Napi::Object obj = NCurve::NewInstance(Napi::External<Curve>::New(info.Env(), &cur));
+    obj.Set(Napi::String::New(env, "msg"), "hello");
+	return obj;
+}
 
 Napi::Object Add(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
@@ -213,8 +225,8 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 		Napi::Function::New(env, BNumber));
 	exports.Set(Napi::String::New(env, "Point"),
 		Napi::Function::New(env, Point));
-	// exports.Set(Napi::String::New(env, "Curve"),
-	//   Napi::Function::New(env, Curve));
+	exports.Set(Napi::String::New(env, "Curve"),
+	  Napi::Function::New(env, ECurve));
 	// exports.Set(Napi::String::New(env, "add"),
 	// 	Napi::Function::New(env, Add));
 	exports.Set(Napi::String::New(env, "mul"),

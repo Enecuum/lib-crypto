@@ -1,7 +1,7 @@
 #pragma once
 
 #include <napi.h>
-#include "ecc/inc/crypto.h"
+#include "../../inc/crypto.h"
 
 class NodeBN : public Napi::ObjectWrap<NodeBN> {
 	public:
@@ -38,4 +38,5 @@ class NodePT : public Napi::ObjectWrap<NodePT> {
 		Napi::Value SetCoords(const Napi::CallbackInfo& info);
 		Napi::Value getX(const Napi::CallbackInfo& info);
 		Napi::Value getY(const Napi::CallbackInfo& info);
+		Napi::Value isInfinity(const Napi::CallbackInfo& info);
 };

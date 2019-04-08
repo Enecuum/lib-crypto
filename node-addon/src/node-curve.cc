@@ -6,15 +6,8 @@
 NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-    NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
-    NodeBN* p = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
-    NodeBN* order = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
-    NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
-    NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
-    
-    Curve curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
-    this->crv = curve;
+    Curve *curve = info[0].As<Napi::External<Curve>>().Data();
+    this->crv = *curve;
     
     // try{
     //     //int i = test(1, 2);
