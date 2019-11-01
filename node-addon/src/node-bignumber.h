@@ -12,6 +12,7 @@ class NodeBN : public Napi::ObjectWrap<NodeBN> {
 	private:
 		static Napi::FunctionReference constructor;
 		Napi::Value GetValue(const Napi::CallbackInfo& info);
+		Napi::Value GetDecString(const Napi::CallbackInfo& info);
 		void setVal(BigNumber a);
 };
 

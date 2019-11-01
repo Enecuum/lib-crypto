@@ -1,32 +1,22 @@
-//let addon = require('./src/Build/Release/addon');
-let addon = require('./node_modules/enecuum-crypto/addon');
+let addon = require('./src/build/Release/addon.node');
 var crypto = require('crypto');
 
 module.exports = addon;
-//module.exports.hashToPoint = hashToPoint; 
 module.exports.createPK = createPK;
 module.exports.getHash = getHash;
+module.exports.toPoint = toPoint;
 
 function toPoint(hash, G, curve){
-	//console.log("hash: " + hash); // 30
-	
 	let slice = hash.slice(0, 5);
 	let r = addon.BigNumber(parseInt(slice, 16));
 	var H = addon.mul(r, G, curve);
-	//console.log("\tH1: " + H.xy(curve))
 	return H;
 }
 
 function createPK(pkey, G, curve){
-	//var r = addon.BigNumber(9);//addon.getRandom(obj1);
 	let slice = pkey.slice(0, 5);
-	//console.log(slice)
 	let r = addon.BigNumber(parseInt(slice, 16));
-	
-	//var r = addon.BigNumber(7);
-	
 	var Q = addon.mul(r, G, curve);
-	//console.log("\tQ: " + Q.xy(curve)); // 30
 	return Q;
 } 
 

@@ -1,14 +1,7 @@
 #pragma once
 
-#ifdef _WIN32
-# ifdef WIN_EXPORT
-#   define EXPORTED  __declspec( dllexport )
-# else
-#   define EXPORTED  __declspec( dllimport )
-# endif
-#else
-# define EXPORTED
-#endif
+#define EXPORTED 
+
 
 //#include "ec_conf.h"
 #include <vector>
@@ -21,8 +14,10 @@
 #include <openssl/err.h>
 #include "BigNumber.h"
 #include "Curve.h"
+#include "ellipticCurve.h"
 
 extern "C" EXPORTED BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *crv);
+//extern "C" EXPORTED BigNumber tatePairing();
 extern "C" EXPORTED EC_POINT *mul(BigNumber n, EC_POINT *P, Curve *crv);
 extern "C" EXPORTED void printBN(char* desc, BIGNUM * bn);
 extern "C" EXPORTED void handleErrors();
@@ -40,3 +35,5 @@ extern "C" EXPORTED BigNumber operator - (const BigNumber &a, const BigNumber &b
 extern "C" EXPORTED BigNumber operator + (const BigNumber &a, const BigNumber &b);
 extern "C" EXPORTED EC_POINT* hashToPoint(BigNumber hash, Curve *curve);
 extern "C" EXPORTED int test(int a, int b);
+EXPORTED ExtensionField::Element tatePairing(ecPoint &P, ecPoint &Q, ecPoint &S, ellipticCurveFq &EF_q);
+EXPORTED ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq);

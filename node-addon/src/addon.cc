@@ -1,7 +1,15 @@
 #include <napi.h>
 #include "node-bignumber.h"
-
+#include <sstream>
 //using namespace Napi;
+
+    #include <givaro/givzpz.h>
+    #include <givaro/givpoly1.h>
+	#include <givaro/givpower.h>
+
+using namespace Givaro;
+
+Integer ppp(5);
 
 Napi::Object BNumber(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
@@ -24,6 +32,21 @@ Napi::Object BNumber(const Napi::CallbackInfo& info) {
 	if (info[0].IsNumber()){
 		BigNumber bn(info[0].As<Napi::Number>().Int32Value());
 		return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+	}
+	if(info[0].IsString()){
+		//std::string hex_chars("E8 48 D8 FF FF 8B 0D");
+		Napi::String a = info[0].As<Napi::String>();
+		std::istringstream hex_chars_stream(a.Utf8Value());
+		std::vector<unsigned char> bytes;
+
+		unsigned int c;
+		while (hex_chars_stream >> std::hex >> c)
+		{
+		    bytes.push_back(c);
+		}
+		BigNumber bn(&bytes[0], bytes.size());
+		return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+		//Napi::Error::New(env, std::to_string("String")).ThrowAsJavaScriptException();
 	}
 	Napi::Error::New(env, std::to_string(info[0].Type())).ThrowAsJavaScriptException();
 	//
