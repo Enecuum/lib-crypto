@@ -3,14 +3,6 @@
 #include <sstream>
 //using namespace Napi;
 
-    #include <givaro/givzpz.h>
-    #include <givaro/givpoly1.h>
-	#include <givaro/givpower.h>
-
-using namespace Givaro;
-
-Integer ppp(5);
-
 Napi::Object BNumber(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	//BigNumber bn;
@@ -76,6 +68,33 @@ Napi::Object ECurve(const Napi::CallbackInfo& info) {
     NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
     NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
     
+    Curve cur(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
+    
+    Napi::Object obj = NCurve::NewInstance(Napi::External<Curve>::New(info.Env(), &cur));
+    obj.Set(Napi::String::New(env, "msg"), "hello");
+	return obj;
+}
+
+Napi::Object ECurve_Fq(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
+    NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
+    NodeBN* p = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
+    NodeBN* order = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
+    NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
+    NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
+    
+    Integer Ip, Im;
+	Ip = Integer("16030569034403128277756688287498649515636838101184337499778392980116222246913");
+	Im = Integer(12);
+	std::string strIrred("12 1 7 16030569034403128277756688287498649515636838101184337499778392980116222246896 16030569034403128277756688287498649515636838101184337499778392980116222246710 16030569034403128277756688287498649515636838101184337499778392980116222246885 2309 2992 16030569034403128277756688287498649515636838101184337499778392980116222237244 16030569034403128277756688287498649515636838101184337499778392980116222225365 3429 48555 63122 37991");
+	std::string strA("0 0");
+	std::string strB("0 5");
+	
+	ellipticCurve *ec = new ellipticCurve(Ip, Im, strIrred, strA, strB);
+	//ec->print();
+	ellipticCurveFq E_Fq(ec);
+	E_Fq.show();
     Curve cur(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
     
     Napi::Object obj = NCurve::NewInstance(Napi::External<Curve>::New(info.Env(), &cur));
@@ -250,6 +269,8 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
 		Napi::Function::New(env, Point));
 	exports.Set(Napi::String::New(env, "Curve"),
 	  Napi::Function::New(env, ECurve));
+	exports.Set(Napi::String::New(env, "Curve_Fq"),
+	  Napi::Function::New(env, ECurve_Fq));
 	// exports.Set(Napi::String::New(env, "add"),
 	// 	Napi::Function::New(env, Add));
 	exports.Set(Napi::String::New(env, "mul"),
