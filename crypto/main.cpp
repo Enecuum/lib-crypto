@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "crypto.h"
+
 using namespace std;
 
 class Point
@@ -228,11 +229,30 @@ int main(int argc, char ** argv)
 
 	ExtensionField::Element r1 = tatePairing(G0_fq, S2_fq, S_fq, E_Fq);
 	cout << "\n r1: " << endl;
-	E_Fq.field->writeElement(r1);
+	//E_Fq.field->writeElement(r1);
 
+	std::stringstream ss;
+	E_Fq.field->writeElement(r1, ss);
+	std::string ss1, ss2, ss3;
+	//ss >> ss1 >> ss2 >> ss3;
+	cout << ss.str() << endl;
+
+	string temp;
+	while (!ss.eof()) {
+		ss >> temp;
+		if (temp == "+")
+			continue;
+		std::size_t start = temp.find("(");
+		std::size_t end = temp.find(")");
+		std::string str3 = temp.substr(start + 1, end - 1);
+		cout << str3 << endl;
+		temp = "";
+	}
+	
 	ecPoint MPK_fq = mapToFq(MPK, curve, E_Fq);
 	ecPoint S1_fq = mapToFq(s1, curve, E_Fq);
 
+/*
 	ExtensionField::Element b1 = tatePairing(MPK_fq, Q_Fq, S_fq, E_Fq);
 	//cout << "\n b1: " << endl;
 	//E_Fq.field->writeElement(b1);
@@ -245,10 +265,10 @@ int main(int argc, char ** argv)
 	E_Fq.field->mul(b1c1, b1, c1);
 	cout << "\n b1c1: " << endl;
 	E_Fq.field->writeElement(b1c1);
-	/**/
+	*/
 	//int verify = (r1 == b1c1)
 	//cout << "\n Verified: " << verify << endl;
-	cout << "\r\nruntime = " << clock() / 1000.0 << endl; // время работы программы  
+	cout << "\r\nruntime is: " << clock() / 1000.0 << endl; // время работы программы  
 
 	EC_POINT_free(Q);
 	EC_POINT_free(MPK);

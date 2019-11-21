@@ -1,16 +1,15 @@
 var addon = require('./addon');
 
 
-	let pArr = [0x23,0x70,0xfb,0x04,0x9d,0x41,0x0f,0xbe,0x4e,0x76,0x1a,0x98,0x86,0xe5,0x02,0x41,0x7d,0x02,0x3f,0x40,0x18,0x00,0x00,0x01,0x7e,0x80,0x60,0x00,0x00,0x00,0x00,0x01]
 	let a = addon.BigNumber(0);
 	let b = addon.BigNumber(5);
-	let p = addon.BigNumber("23 70 fb 04 9d 41 0f be 4e 76 1a 98 86 e5 02 41 7d 02 3f 40 18 00 00 01 7e 80 60 00 00 00 00 01");
+	let p = addon.BigNumber("2370fb049d410fbe4e761a9886e502417d023f40180000017e80600000000001");
 			//console.log(b.decString())
 		console.log(p.decString())
-	let order = addon.BigNumber("23 70 fb 04 9d 41 0f be 4e 76 1a 98 86 e5 02 41 1d c1 af 70 12 00 00 01 7e 80 60 00 00 00 00 01");
+	let order = addon.BigNumber("2370fb049d410fbe4e761a9886e502411dc1af70120000017e80600000000001");
 
-	let gx = addon.BigNumber("1e 98 4a c1 56 de 86 90 d0 e1 ee 61 f4 1a 8c d2 b0 d9 9e 9d 50 94 84 b2 00 dd 6d 14 1d 68 56 95");
-	let gy = addon.BigNumber("01 57 56 79 2c c8 16 71 48 1b b4 83 0f 0d 3f d7 20 ba 97 b3 10 60 c6 ec 91 1a 9a eb 1c 27 52 29");
+	let gx = addon.BigNumber("1e984ac156de8690d0e1ee61f41a8cd2b0d99e9d509484b200dd6d141d685695");
+	let gy = addon.BigNumber("015756792cc81671481bb4830f0d3fd720ba97b31060c6ec911a9aeb1c275229");
 	let g0x = gx;
 	let g0y = gy;
 	let q = order;//addon.BigNumber("2370fb049d410fbe4e761a9886e502411dc1af70120000017e80600000000001");
@@ -27,10 +26,16 @@ var addon = require('./addon');
 //
 // ------------------ PKG part
 //
-
+	//PK_LPoS = "7c d9 25 af af fb 84 66 02 92 13 a0 5a e0 fa af f9 c5 33 df b3 ae 44 6d bf cb 97 1e 45 e2 ca cf";
 	console.log("Creating curve");
  	let curve = addon.Curve(a, b, p, order, g0x, g0y);
  	console.log(curve)
+
+	let strIrred = "12 1 7 16030569034403128277756688287498649515636838101184337499778392980116222246896 16030569034403128277756688287498649515636838101184337499778392980116222246710 16030569034403128277756688287498649515636838101184337499778392980116222246885 2309 2992 16030569034403128277756688287498649515636838101184337499778392980116222237244 16030569034403128277756688287498649515636838101184337499778392980116222225365 3429 48555 63122 37991";
+	let strA = "0 0";
+	let strB = "0 5";
+	let e_fq = addon.Curve_Fq(p.decString(), 12, strIrred, strA, strB);
+	console.log(e_fq);
 	var G0 = addon.Point(g0x, g0y, curve);
 	console.log("G0: " + G0.xy(curve));
 	var G = addon.Point(gx, gy, curve);
@@ -110,8 +115,8 @@ var addon = require('./addon');
 		}
 	}
 
-	req.data.leader_sign = addon.sign(req.data.m_hash, LPoSID, G, G0, secret, curve);
-	
+	req.data.leader_sign = addon.sign_tate(req.data.m_hash, LPoSID, G, G0, secret, curve, e_fq);
+	console.log(req.data.leader_sign);
 	//req.data.leader_sign = {"r":{"x":1199,"y":966},"s":{"x":1039,"y":885}}
 
 
@@ -127,4 +132,4 @@ var addon = require('./addon');
 	let Qa = addon.toPoint(PK_LPoS, G, curve);
 	console.log("Verification...");
 	//console.log("Block verified: " + addon.verify(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve));
-	console.log("Block verified: " + addon.verify(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve));
+	console.log("Block verified: " + addon.verify_tate(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve, e_fq));

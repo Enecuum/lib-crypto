@@ -97,41 +97,9 @@ ExtensionField::Element& ExtensionField::neg(Element& R, const Element& A) const
     Fp_X.neg(R,A);
     return R;
 }
-ExtensionField::Element& ExtensionField::pow(Element& R, const Element& A, Integer e) const
-{
-	//Fp_X.neg(R, A);
-	//Integer e(2);
-	dom_power(R, A, (unsigned long)e, Fp_X);
-	return R;
-}
 
-ExtensionField::Element& ExtensionField::fastpow(Element& R, const Element& A, string eta) const
+ExtensionField::Element& ExtensionField::pow(Element& R, const Element& A, string eta) const
 {
-	//Fp_X.neg(R, A);
-	//Integer e(2);
-	//string eta = "10";
-	Element tmp;
-	
-	R = one;
-	int pow = eta.size() - 1;
-	for (int i = 0; i < eta.size(); i++) {
-		if (eta[i] == '1') {
-			tmp = A;
-			//cout << "pow = " << pow << endl;
-			for (int j = 0; j < pow; j++) {
-				sqr(tmp, tmp);
-			}
-			mul(R, R, tmp);
-		}
-		pow--;
-	}
-	return R;
-}
-ExtensionField::Element& ExtensionField::superfastpow(Element& R, const Element& A, string eta) const
-{
-	//Fp_X.neg(R, A);
-	//Integer e(2);
-	//string eta = "10011000100101101000000";
 	Element tmp;
 
 	R = one;
@@ -141,7 +109,6 @@ ExtensionField::Element& ExtensionField::superfastpow(Element& R, const Element&
 	tmp = A;
 	while(pow >= 0){
 		if (eta[pow] == '1') {
-			//cout << "pow = " << pow << endl;
 			while(i < size - pow){
 				sqr(tmp, tmp);
 				i++;
@@ -151,6 +118,18 @@ ExtensionField::Element& ExtensionField::superfastpow(Element& R, const Element&
 		pow--;
 	}
 	return R;
+}
+ExtensionField::Element& ExtensionField::random(Element& R) const
+{
+	//Element res;
+	Integer seed("16030569034403128277756688287498649515636838101184337499778392980116222246912");
+	std::cerr << "seed: " << seed << std::endl;
+
+	Integer::seeding(seed);
+
+	GivRandom generator(seed);
+	//Integer::seeding(generator.seed());
+	Fp_X.random(generator, R, Degree(12));
 }
 //Return R=A*B%irred
 ExtensionField::Element& ExtensionField::mul(Element& R, const Element& A, const Element& B) const
@@ -240,6 +219,12 @@ void ExtensionField::writeElement(Element& A)
     cout<<"( ";
     Fp_X.write(cout<<"",A); 
     cout<<" )";  
+}
+void ExtensionField::writeElement(Element& A, std::stringstream& ss)
+{
+	//ss << "( ";
+	Fp_X.write(ss, A);
+	//ss << " )";
 }
 bool ExtensionField::isElement(const Element& A)
 {

@@ -27,6 +27,17 @@ class NCurve : public Napi::ObjectWrap<NCurve> {
 		Napi::Value GetValue(const Napi::CallbackInfo& info);
 };
 
+class NCurve_Fq : public Napi::ObjectWrap<NCurve_Fq> {
+	public:
+		static void Init(Napi::Env env, Napi::Object exports);
+		static Napi::Object NewInstance(Napi::Value arg);
+		NCurve_Fq(const Napi::CallbackInfo& info);
+		ellipticCurveFq *E_Fq;
+	private:
+		static Napi::FunctionReference constructor;
+		Napi::Value GetValue(const Napi::CallbackInfo& info);
+};
+
 class NodePT : public Napi::ObjectWrap<NodePT> {
 	public:
 		static void Init(Napi::Env env, Napi::Object exports);
@@ -40,4 +51,19 @@ class NodePT : public Napi::ObjectWrap<NodePT> {
 		Napi::Value getX(const Napi::CallbackInfo& info);
 		Napi::Value getY(const Napi::CallbackInfo& info);
 		Napi::Value isInfinity(const Napi::CallbackInfo& info);
+};
+
+class NodePT_Fq : public Napi::ObjectWrap<NodePT_Fq> {
+	public:
+		static void Init(Napi::Env env, Napi::Object exports);
+		static Napi::Object NewInstance(Napi::Value arg);
+		NodePT_Fq(const Napi::CallbackInfo& info);
+		ecPoint *p;
+	private:
+		static Napi::FunctionReference constructor;
+		// Napi::Value GetCoords(const Napi::CallbackInfo& info);
+		// Napi::Value SetCoords(const Napi::CallbackInfo& info);
+		// Napi::Value getX(const Napi::CallbackInfo& info);
+		// Napi::Value getY(const Napi::CallbackInfo& info);
+		// Napi::Value isInfinity(const Napi::CallbackInfo& info);
 };

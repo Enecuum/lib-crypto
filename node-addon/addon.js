@@ -7,16 +7,20 @@ module.exports.getHash = getHash;
 module.exports.toPoint = toPoint;
 
 function toPoint(hash, G, curve){
-	let slice = hash.slice(0, 5);
-	let r = addon.BigNumber(parseInt(slice, 16));
-	var H = addon.mul(r, G, curve);
+	//let slice = hash.slice(0, 5);
+	let r = addon.BigNumber(hash);
+	//console.log(r.decString());
+	let H = addon.mul(r, G, curve);
+	//console.log("H: " + H.xy(curve));
 	return H;
 }
 
 function createPK(pkey, G, curve){
-	let slice = pkey.slice(0, 5);
-	let r = addon.BigNumber(parseInt(slice, 16));
-	var Q = addon.mul(r, G, curve);
+	//let slice = pkey.slice(0, 5);
+	let r = addon.BigNumber(pkey);
+	//console.log(r.decString());
+	let Q = addon.mul(r, G, curve);
+	//console.log("Q: " + Q.xy(curve));
 	return Q;
 } 
 
@@ -56,6 +60,24 @@ module.exports.sign = function (M, leadID, G, G0, secret, curve){
 	};
 }
 
+module.exports.sign_tate = function (M, leadID, G, G0, secret, curve, ecurve){
+	console.log("hash = " + getHash(M.toString() + leadID.toString()));
+	var H = toPoint(getHash(M.toString() + leadID.toString()), G, curve);
+
+	var q = addon.BigNumber(13);
+
+	var r2 = addon.BigNumber(2);//addon.getRandom(q);
+	var s1 = addon.mul(r2, G0, curve);
+	// S2 = r*H + SecKey
+	
+	//let rH = addon.mul(r2, H, curve);
+	//let rH_Fq = 
+	//let s2 = addon.addPoints(rH, secret, curve);
+	let s2 = addon.signTate(H, secret, G, curve, ecurve);
+
+	return s2;
+}
+
 module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 	var sx = addon.BigNumber(0);
 	var sy = addon.BigNumber(522);
@@ -80,5 +102,21 @@ module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 	if(r1.value() == b1c1.value())
 		return 1;
 	else 
+		return 0;
+}
+
+module.exports.verify_tate = function (sign, M, Q, G, G0, MPK, leadID, p, curve, ecurve ){
+	var H = toPoint(getHash(M.toString() + leadID.toString()), G, curve);
+
+	let bn1 = BigInt(sign.r.x, 10);
+	let bn2 = BigInt(sign.r.y, 10);
+	var s1 = addon.Point(addon.BigNumber(bn1.toString(16)), addon.BigNumber(bn2.toString(16)), curve);
+	//var s2 = addon.Point(addon.BigNumber(sign.s.x), addon.BigNumber(sign.s.y), curve)
+
+	let res = addon.verifyTate(sign, s1, H, Q, G0, MPK, curve, ecurve);
+
+	// if(r1.value() == b1c1.value())
+	// 	return 1;
+	// else 
 		return 0;
 }

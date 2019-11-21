@@ -6,6 +6,7 @@ check if "=="" operator for type Element in ecPoint is defined
     #include <givaro/givzpz.h>
     #include <givaro/givpoly1.h>
 	#include <givaro/givpower.h>
+	#include <givaro/givrandom.h>
 #endif
 
 #include <iostream>
@@ -36,10 +37,8 @@ public:
     Element& sub(Element& R, const Element& A, const Element& B) const;
     //Return R=-B
     Element& neg(Element& R, const Element& A) const;
-
-	Element& pow(Element& R, const Element& A, Integer e) const;
-	Element& fastpow(Element& R, const Element& A, std::string eta) const;
-	Element& superfastpow(Element& R, const Element& A, std::string eta) const;
+	Element& random(Element& R) const;
+	Element& pow(Element& R, const Element& A, std::string eta) const;
     //Return R=A*B%irred
     Element& mul(Element& R, const Element& A, const Element& B) const;
     //Return R=A*A%irred
@@ -56,7 +55,7 @@ public:
     void readElement(Element& A, bool flag=true);
 	void readElement(std::string str, Element& P);
     void writeElement(Element& A);
-
+	void writeElement(Element& A, std::stringstream& ss);
     bool isElement(const Element& A);
 };
 class ecPoint

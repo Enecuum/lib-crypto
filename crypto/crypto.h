@@ -37,3 +37,4 @@ extern "C" EXPORTED EC_POINT* hashToPoint(BigNumber hash, Curve *curve);
 extern "C" EXPORTED int test(int a, int b);
 EXPORTED ExtensionField::Element tatePairing(ecPoint &P, ecPoint &Q, ecPoint &S, ellipticCurveFq &EF_q);
 EXPORTED ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq);
+//EXPORTED ellipticCurveFq::Point hashToPointFq(ecPoint &P, BigNumber hash, ellipticCurveFq& E_Fq);

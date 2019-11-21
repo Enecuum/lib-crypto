@@ -83,3 +83,35 @@ Napi::Value NodePT::isInfinity(const Napi::CallbackInfo& info) {
         ret = 1;
     return Napi::Number::New(info.Env(), ret);
 }
+
+// --------------------- ecpoint -----------------------
+NodePT_Fq::NodePT_Fq(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NodePT_Fq>(info) {
+    Napi::Env env = info.Env();
+    Napi::HandleScope scope(env);
+    ecPoint* res = (info[0].As<Napi::External<ecPoint>>().Data());
+    this->p = res;
+};
+
+Napi::FunctionReference NodePT_Fq::constructor;
+
+void NodePT_Fq::Init(Napi::Env env, Napi::Object exports) {
+    Napi::HandleScope scope(env);
+
+    Napi::Function func = DefineClass(env, "NodePT_Fq", {
+        // InstanceMethod("xy", &NodePT::GetCoords),
+        // InstanceMethod("SetCoords", &NodePT::SetCoords),
+        // InstanceMethod("x", &NodePT::getX),
+        // InstanceMethod("y", &NodePT::getY),
+        // InstanceMethod("isInfinity", &NodePT::isInfinity)
+    });
+
+    constructor = Napi::Persistent(func);
+    constructor.SuppressDestruct();
+
+    exports.Set("NodePT_Fq", func);
+}
+
+Napi::Object NodePT_Fq::NewInstance(Napi::Value arg) {
+    Napi::Object obj = constructor.New({ arg });
+    return obj;
+}
