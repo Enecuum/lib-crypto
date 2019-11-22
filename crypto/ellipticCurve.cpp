@@ -53,7 +53,7 @@ ExtensionField::ExtensionField(Integer p, Integer m, std::string strIrred)
 		//cout<<"Give an irreducible polynomial of degree "<<m<<": ";
 		Fp_X.read(stream, irred);
 		//cout<<endl;
-		Fp_X.write(cout, irred);
+		//Fp_X.write(cout, irred);
 	}
 	primeField::Element tmp;
 	Fp_X.assign(zero, Fp_X.zero);

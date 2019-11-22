@@ -206,11 +206,11 @@ Napi::Object SignTate(const Napi::CallbackInfo& info) {
     resR.Set(Napi::String::New(env, "y"), s1_y.toDecString());
 
     Napi::Object resS = Napi::Object::New(env);
-    Napi::Array arrX = Napi::Array::New(env, 12);
+    Napi::Array arrX = Napi::Array::New(env, elementsX.size());
     for(int i = 0; i < elementsX.size(); i++){
     	arrX[i] = elementsX[elementsX.size() - i - 1];
     }
-    Napi::Array arrY = Napi::Array::New(env, 12);
+    Napi::Array arrY = Napi::Array::New(env, elementsX.size());
     for(int i = 0; i < elementsY.size(); i++){
     	arrY[i] = elementsY[elementsX.size() - i - 1];
     }
@@ -399,6 +399,9 @@ Napi::Object VerifyTate(const Napi::CallbackInfo& info) {
 	Napi::Object s2 = sign.Get("s").As<Napi::Object>();
 	Napi::Array s2x = s2.Get("x").As<Napi::Array>();
 	Napi::Array s2y = s2.Get("y").As<Napi::Array>();
+	//
+	// -------- TODO: rewrite hardcode
+	//
 	std::string strS2x("11"), strS2y("11");
 	for(int i = 0; i < s2x.Length(); i++){
 		Napi::Value tmpx = s2x[i];
