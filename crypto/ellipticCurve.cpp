@@ -98,6 +98,11 @@ ExtensionField::Element& ExtensionField::neg(Element& R, const Element& A) const
     return R;
 }
 
+bool ExtensionField::areEqual(Element& A, const Element& B) const
+{
+	return Fp_X.areEqual(A, B);;
+}
+
 ExtensionField::Element& ExtensionField::pow(Element& R, const Element& A, string eta) const
 {
 	Element tmp;
@@ -119,18 +124,7 @@ ExtensionField::Element& ExtensionField::pow(Element& R, const Element& A, strin
 	}
 	return R;
 }
-ExtensionField::Element& ExtensionField::random(Element& R) const
-{
-	//Element res;
-	Integer seed("16030569034403128277756688287498649515636838101184337499778392980116222246912");
-	std::cerr << "seed: " << seed << std::endl;
 
-	Integer::seeding(seed);
-
-	GivRandom generator(seed);
-	//Integer::seeding(generator.seed());
-	Fp_X.random(generator, R, Degree(12));
-}
 //Return R=A*B%irred
 ExtensionField::Element& ExtensionField::mul(Element& R, const Element& A, const Element& B) const
 {

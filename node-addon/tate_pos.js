@@ -1,15 +1,15 @@
 var addon = require('./addon');
 
 
-	let a = addon.BigNumber(0);
-	let b = addon.BigNumber(5);
-	let p = addon.BigNumber("2370fb049d410fbe4e761a9886e502417d023f40180000017e80600000000001");
+	let a = addon.BigNumber(1);
+	let b = addon.BigNumber(0);
+	let p = addon.BigNumber("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080003");
 			//console.log(b.decString())
 		console.log(p.decString())
-	let order = addon.BigNumber("2370fb049d410fbe4e761a9886e502411dc1af70120000017e80600000000001");
+	let order = addon.BigNumber("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080004");
 
-	let gx = addon.BigNumber("1e984ac156de8690d0e1ee61f41a8cd2b0d99e9d509484b200dd6d141d685695");
-	let gy = addon.BigNumber("015756792cc81671481bb4830f0d3fd720ba97b31060c6ec911a9aeb1c275229");
+	let gx = addon.BigNumber("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
+	let gy = addon.BigNumber("2c022abadb261d2e79cb693f59cdeeeb8a727086303285e5e629915e665f7aebcbf20b7632c824b56ed197f5642244f3721c41c9d2e2e4aca93e892538cd198a");
 	let g0x = gx;
 	let g0y = gy;
 	let q = order;//addon.BigNumber("2370fb049d410fbe4e761a9886e502411dc1af70120000017e80600000000001");
@@ -26,15 +26,14 @@ var addon = require('./addon');
 //
 // ------------------ PKG part
 //
-	//PK_LPoS = "7c d9 25 af af fb 84 66 02 92 13 a0 5a e0 fa af f9 c5 33 df b3 ae 44 6d bf cb 97 1e 45 e2 ca cf";
 	console.log("Creating curve");
  	let curve = addon.Curve(a, b, p, order, g0x, g0y);
  	console.log(curve)
 
-	let strIrred = "12 1 7 16030569034403128277756688287498649515636838101184337499778392980116222246896 16030569034403128277756688287498649515636838101184337499778392980116222246710 16030569034403128277756688287498649515636838101184337499778392980116222246885 2309 2992 16030569034403128277756688287498649515636838101184337499778392980116222237244 16030569034403128277756688287498649515636838101184337499778392980116222225365 3429 48555 63122 37991";
-	let strA = "0 0";
-	let strB = "0 5";
-	let e_fq = addon.Curve_Fq(p.decString(), 12, strIrred, strA, strB);
+	let strIrred = "2 1 1 6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826";
+	let strA = "0 1";
+	let strB = "0 0";
+	let e_fq = addon.Curve_Fq(p.decString(), 2, strIrred, strA, strB);
 	console.log(e_fq);
 	var G0 = addon.Point(g0x, g0y, curve);
 	console.log("G0: " + G0.xy(curve));
@@ -130,6 +129,7 @@ var addon = require('./addon');
 	console.log(PK_LPoS)
 	//let Qa = addon.createPK(PK_LPoS, G, curve);
 	let Qa = addon.toPoint(PK_LPoS, G, curve);
+	console.log("Qa: " + Qa.xy(curve));
 	console.log("Verification...");
 	//console.log("Block verified: " + addon.verify(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve));
 	console.log("Block verified: " + addon.verify_tate(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve, e_fq));

@@ -103,7 +103,7 @@ int main(int argc, char ** argv)
 	int KblockID = 123;
 	int LPoSID = 677321;
 	// r следует брать соучайно r = ZZ.random_element(q)
-	BigNumber r(3);// = getRandom(q);
+	BigNumber r = getRandom(p);
 
 	std::cout << "Random r: " << r.toDecString() << endl;
 	EC_POINT *Q = mul(r, G, curve);
@@ -137,14 +137,14 @@ int main(int argc, char ** argv)
 	std::cout << "\r\n      Create signature" << endl;
 	
 	BigNumber M(200);
-	BigNumber r2(3); // = getRandom(q);
-	cout << "r2: " << r2.toDecString() << endl;
+	BigNumber r2  = getRandom(q);
+	//cout << "r2: " << r2.toDecString() << endl;
 	EC_POINT *s1;
 	// R = rP
 	s1 = mul(r2, G0, curve);
 
-	std::cout << "S1: ";
-	printPoint(s1, curve);
+	//std::cout << "S1: ";
+	//printPoint(s1, curve);
 	/*
 	verify_mobile(
 		"16030569034403128277756688287498649515636838101184337499778392980116222246913",
@@ -239,27 +239,27 @@ int main(int argc, char ** argv)
 */
 
 
-	cout << "\n secret fq: " << endl;
-	E_Fq.show(secret_fq);
+	//cout << "\n secret fq: " << endl;
+	//E_Fq.show(secret_fq);
 	BigNumber hash = getRandom(p);
 	//string strHx_fq("1 6585938874884161190249790176567180373159829994480512034157897828690094321702398082583836641936540925052205593236857739108779400699876416733619250033001574 1114870903498799919300311051614230487702143776715306484413118861977974710144846490697848621314514171343204111400320074712855582002282753809846905090592511");
 	//string strHy_fq("1 5977369586974353026773600315229776563237092478572059568886286293271512008099964983767401181053880836241479041663079843436368298305692856067127602342710521 2161202195522849472617767678421059087248221940509956469640162759356556534804221688741829365093541793519766900881300788512903369980421169424075071068242390");
 	//E_Fq.field->readElement(strHx_fq, HFq_x);
 	//E_Fq.field->readElement(strHy_fq, HFq_y);
 	ecPoint H_fq = hashToPointFq(secret_fq, hash, E_Fq);
-	cout << "\n H_fq: " << endl;
-	E_Fq.show(H_fq);
+	//cout << "\n H_fq: " << endl;
+	//E_Fq.show(H_fq);
 	ecPoint rH, S2_fq;
 	
 	E_Fq.scalarMultiply(rH, H_fq, (Integer)(r2.toDecString()), -1);//R=6*P, order of P is not required
-	cout << "\n rH: " << endl;
-	E_Fq.show(rH);
+	//cout << "\n rH: " << endl;
+	//E_Fq.show(rH);
 
 	E_Fq.add(S2_fq,rH, secret_fq);//R=P+Q
-	cout << "\n S2_fq: " << endl;
-	E_Fq.show(S2_fq);
+	//cout << "\n S2_fq: " << endl;
+	//E_Fq.show(S2_fq);
 
-	BigNumber shash = getRandom(p);
+	BigNumber shash = getRandom(q);
 	//string strSx_fq("1 6159497620935257906557343540898005704075905690051056620736859984179681011970149193326830486125500760419791791564998991498449345753926314997987382523405921 3955639758400305255197132500245584107122348438917038996230137507748635098851063891808983517470373013192290448706270855321350612334250594749922405365544392");
 	//string strSy_fq("1 1358517738138214687498297006528551934170768973346051715607110811974480465953218306945989515494073925868991969272612769952234634613804574004024545343325167 617848479534351383674347258603898500438322921182801022785593855537092883000984751823642698365488639632813733693500782440637339604880634710794074753004823");
 	//E_Fq.field->readElement(strSx_fq, SFq_x);
@@ -277,8 +277,8 @@ int main(int argc, char ** argv)
 
 	ecPoint Q_Fq = mapToFq(Q, curve, E_Fq);
 	//E_Fq.scalarMultiply(Q_Fq, G0_fq, (Integer)(msk.toDecString()), -1);
-	cout << "\n Q_Fq: " << endl;
-	E_Fq.show(Q_Fq);
+	//cout << "\n Q_Fq: " << endl;
+	//E_Fq.show(Q_Fq);
 	//std::stringstream ss;
 	//E_Fq.field->writeElement(r1, ss);
 
@@ -303,7 +303,8 @@ int main(int argc, char ** argv)
 
 	// TODO: cacl instead of hard-code
 	string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
-
+	BigNumber bnEta("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080002");
+	
 	/*
 	  eta = (p^k - 1)/q
 	  tate pairing return value should be in `eta` degree
@@ -321,12 +322,13 @@ int main(int argc, char ** argv)
 	//E_Fq.field->pow(b1c1, bbcc, strEta);
 	cout << "\n r1: " << endl;
 	E_Fq.field->writeElement(r1);
-	cout << "\n b1: " << endl;
-	E_Fq.field->writeElement(b1);
-	cout << "\n c1: " << endl;
-	E_Fq.field->writeElement(c1);
+	//cout << "\n b1: " << endl;
+	//E_Fq.field->writeElement(b1);
+	//cout << "\n c1: " << endl;
+	//E_Fq.field->writeElement(c1);
 	cout << "\n b1c1: " << endl;
 	E_Fq.field->writeElement(b1c1);
+	cout << "\n Verified: " << E_Fq.field->areEEqual(r1, b1c1) << endl;
 	/**/
 	//int verify = (r1 == b1c1)
 	//cout << "\n Verified: " << verify << endl;

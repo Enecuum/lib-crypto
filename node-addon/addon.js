@@ -62,20 +62,10 @@ module.exports.sign = function (M, leadID, G, G0, secret, curve){
 
 module.exports.sign_tate = function (M, leadID, G, G0, secret, curve, ecurve){
 	console.log("hash = " + getHash(M.toString() + leadID.toString()));
-	var H = toPoint(getHash(M.toString() + leadID.toString()), G, curve);
+	var h = addon.BigNumber(getHash(M.toString() + leadID.toString()));
 
-	var q = addon.BigNumber(13);
-
-	var r2 = addon.BigNumber(2);//addon.getRandom(q);
-	var s1 = addon.mul(r2, G0, curve);
-	// S2 = r*H + SecKey
-	
-	//let rH = addon.mul(r2, H, curve);
-	//let rH_Fq = 
-	//let s2 = addon.addPoints(rH, secret, curve);
-	let s2 = addon.signTate(H, secret, G, curve, ecurve);
-
-	return s2;
+	let res = addon.signTate(h, secret, G, curve, ecurve);
+	return res;
 }
 
 module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
@@ -106,17 +96,17 @@ module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 }
 
 module.exports.verify_tate = function (sign, M, Q, G, G0, MPK, leadID, p, curve, ecurve ){
-	var H = toPoint(getHash(M.toString() + leadID.toString()), G, curve);
+	var h = addon.BigNumber(getHash(M.toString() + leadID.toString()));
 
 	let bn1 = BigInt(sign.r.x, 10);
 	let bn2 = BigInt(sign.r.y, 10);
 	var s1 = addon.Point(addon.BigNumber(bn1.toString(16)), addon.BigNumber(bn2.toString(16)), curve);
 	//var s2 = addon.Point(addon.BigNumber(sign.s.x), addon.BigNumber(sign.s.y), curve)
 
-	let res = addon.verifyTate(sign, s1, H, Q, G0, MPK, curve, ecurve);
+	let res = addon.verifyTate(sign, s1, h, Q, G0, MPK, curve, ecurve);
 
 	// if(r1.value() == b1c1.value())
 	// 	return 1;
 	// else 
-		return 0;
+		return res;
 }

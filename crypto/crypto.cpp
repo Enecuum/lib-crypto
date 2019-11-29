@@ -343,13 +343,9 @@ ExtensionField::Element g(ecPoint& P, ecPoint& Q, ExtensionField::Element& x1, E
 
 ExtensionField::Element miller(ecPoint& P, ecPoint& Q, ellipticCurveFq& EF_q) {
 	BigNumber Bm("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080004");
-	//string m = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100";
 	
 	int len = BN_num_bits(Bm.bn) - 1; // Minus first sign bit
-	//for (int j = 0; j < len; j++) {
-	//	std::cout << BN_is_bit_set(Bm.bn, len - j - 1);
-	//}
-	//std::cout << len << std::endl;
+
 	ExtensionField::Element f, gret, fgret, x1, y1;
 	x1 = Q.x;
 	y1 = Q.y;
@@ -428,19 +424,19 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 		E_Fq.field->add(x2, x2, x1);
 		E_Fq.field->pow(x2powed, x2, residue);
 		if (x2powed == E_Fq.field->one) {
-			std::cout << std::endl << "hash is: " << num.toDecString() << std::endl;
+			//std::cout << std::endl << "hash is: " << num.toDecString() << std::endl;
 			break;
 		}
 		else {
 			//break;
-			std::cout << std::endl << "Increase hash... " << std::endl;
+			//std::cout << std::endl << "Increase hash... " << std::endl;
 			num = num + BigNumber(1);
 		}
 	}
-	std::cout << std::endl << "x1 " << std::endl;
-	E_Fq.field->writeElement(x1);
-	std::cout << std::endl << "x2 " << std::endl;
-	E_Fq.field->writeElement(x2);
+	//std::cout << std::endl << "x1 " << std::endl;
+	//E_Fq.field->writeElement(x1);
+	//std::cout << std::endl << "x2 " << std::endl;
+	//E_Fq.field->writeElement(x2);
 	// x1 = x ^ hash
 	// x2 = a1x + b1
 	// y coord = ax + b
@@ -462,8 +458,8 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Integer Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	Integer f0("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
 
-	std::cout << std::endl << "a1 " << a1 << std::endl;
-	std::cout << std::endl << "b1 " << b1 << std::endl;
+	//std::cout << std::endl << "a1 " << a1 << std::endl;
+	//std::cout << std::endl << "b1 " << b1 << std::endl;
 
 	Integer D = ((2 * a1 - 4 * b1) * (2 * a1 - 4 * b1) + (4 * (4 * f0 - 1) * (a1 * a1))) % Ip;
 
@@ -473,11 +469,11 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Integer nom = (2 * a1 - 4 * b1 + root);
 	Integer den = (2 * (4 * f0 - 1));
 
-	std::cout << std::endl << "D: " << D << std::endl;
-	std::cout << std::endl << "sqrt(D): " << sqrt(D) << std::endl;
-	std::cout << std::endl << "root: " << root << std::endl;
-	std::cout << std::endl << "nom: " << nom << std::endl;
-	std::cout << std::endl << "den: " << den << std::endl;
+	//std::cout << std::endl << "D: " << D << std::endl;
+	//std::cout << std::endl << "sqrt(D): " << sqrt(D) << std::endl;
+	//std::cout << std::endl << "root: " << root << std::endl;
+	//std::cout << std::endl << "nom: " << nom << std::endl;
+	//std::cout << std::endl << "den: " << den << std::endl;
 	ExtensionField Fp(Ip, (Integer)1);
 	ExtensionField::Element y_fp, nom_fp, den_fp;
 	std::string strnom("0 ");
@@ -488,8 +484,8 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Fp.readElement(strden, den_fp);
 
 	Fp.div(y_fp, nom_fp, den_fp);
-	std::cout << std::endl << "y_fp: " << std::endl;
-	Fp.writeElement(y_fp);
+	//std::cout << std::endl << "y_fp: " << std::endl;
+	//Fp.writeElement(y_fp);
 
 	int len2 = BN_num_bits(eta3.bn); // Minus first sign bit
 	std::string strEta3("");
@@ -498,8 +494,8 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	}
 	ExtensionField::Element a_fq, a1_fp;
 	Fp.pow(a_fq, y_fp, strEta3);
-	std::cout << std::endl << "a_fq: " << std::endl;
-	Fp.writeElement(a_fq);
+	//std::cout << std::endl << "a_fq: " << std::endl;
+	//Fp.writeElement(a_fq);
 
 	std::string stra1("0 ");
 	stra1.append((string)a1);
@@ -511,8 +507,8 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Fp.sqr(asqr, a_fq);
 	Fp.add(asqr, asqr, a1_fp);
 	Fp.div(b_fq, asqr, adbl);
-	std::cout << std::endl << "b_fq: " << std::endl;
-	Fp.writeElement(b_fq);
+	//std::cout << std::endl << "b_fq: " << std::endl;
+	//Fp.writeElement(b_fq);
 
 	// Final point is two polynomials:
 	// res_x(x1)

@@ -7,6 +7,9 @@ check if "=="" operator for type Element in ecPoint is defined
     #include <givaro/givpoly1.h>
 	#include <givaro/givpower.h>
 	#include <givaro/givrandom.h>
+	#include <givaro/givinteger.h>
+	#include <givaro/givintsqrootmod.h>
+	#include <givaro/modular-integer.h>
 #endif
 
 #include <iostream>
@@ -37,7 +40,7 @@ public:
     Element& sub(Element& R, const Element& A, const Element& B) const;
     //Return R=-B
     Element& neg(Element& R, const Element& A) const;
-	Element& random(Element& R) const;
+
 	Element& pow(Element& R, const Element& A, std::string eta) const;
     //Return R=A*B%irred
     Element& mul(Element& R, const Element& A, const Element& B) const;
@@ -57,6 +60,7 @@ public:
     void writeElement(Element& A);
 	void writeElement(Element& A, std::stringstream& ss);
     bool isElement(const Element& A);
+	bool areEqual(Element& A, const Element& B) const;
 };
 class ecPoint
 {
