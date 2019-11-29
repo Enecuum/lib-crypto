@@ -7,6 +7,9 @@ check if "=="" operator for type Element in ecPoint is defined
     #include <givaro/givpoly1.h>
 	#include <givaro/givpower.h>
 	#include <givaro/givrandom.h>
+	#include <givaro/givinteger.h>
+	#include <givaro/givintsqrootmod.h>
+	#include <givaro/modular-integer.h>
 #endif
 
 #include <iostream>
