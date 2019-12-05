@@ -98,9 +98,7 @@ module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 module.exports.verify_tate = function (sign, M, Q, G, G0, MPK, leadID, p, curve, ecurve ){
 	var h = addon.BigNumber(getHash(M.toString() + leadID.toString()));
 
-	let bn1 = BigInt(sign.r.x, 10);
-	let bn2 = BigInt(sign.r.y, 10);
-	var s1 = addon.Point(addon.BigNumber(bn1.toString(16)), addon.BigNumber(bn2.toString(16)), curve);
+	var s1 = addon.Point(addon.BigNumber(sign.r.x), addon.BigNumber(sign.r.y), curve);
 	//var s2 = addon.Point(addon.BigNumber(sign.s.x), addon.BigNumber(sign.s.y), curve)
 
 	let res = addon.verifyTate(sign, s1, h, Q, G0, MPK, curve, ecurve);

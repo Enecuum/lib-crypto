@@ -19,6 +19,7 @@ public:
 	~BigNumber();
 	int decimal();
 	char* toDecString();
+	std::string toHexString();
 	BIGNUM* bn;
 	long dec;
 };

@@ -69,3 +69,7 @@ int BigNumber::decimal() {
 char* BigNumber::toDecString() {
 	return BN_bn2dec(bn);
 }
+std::string BigNumber::toHexString() {
+	std::string bnhex(BN_bn2hex(bn));
+	return bnhex;
+}

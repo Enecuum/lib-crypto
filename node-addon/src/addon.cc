@@ -157,8 +157,10 @@ Napi::Object SignTate(const Napi::CallbackInfo& info) {
 	if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, s1, s1_x.bn, s1_y.bn, NULL)) handleErrors();
 	Napi::Object resR = Napi::Object::New(env);
 
-    resR.Set(Napi::String::New(env, "x"), s1_x.toDecString());
-    resR.Set(Napi::String::New(env, "y"), s1_y.toDecString());
+	Napi::String ns1_x = Napi::String::New(env, s1_x.toHexString());
+	Napi::String ns1_y = Napi::String::New(env, s1_y.toHexString());
+    resR.Set(Napi::String::New(env, "x"), ns1_x);
+    resR.Set(Napi::String::New(env, "y"), ns1_y);
 
     Napi::Object resS = Napi::Object::New(env);
     Napi::Array arrX = Napi::Array::New(env, elementsX.size());
