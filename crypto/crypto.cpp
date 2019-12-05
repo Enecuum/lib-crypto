@@ -298,12 +298,28 @@ BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *curve) {
 ExtensionField::Element g(ecPoint& P, ecPoint& Q, ExtensionField::Element& x1, ExtensionField::Element& y1, ellipticCurveFq& EF_q) {
 
 	ExtensionField::Element px, py, qx, qy, slope;
-	ExtensionField::Element py_plus_qy = NULL, x1_minus_px, negqy;
+	ExtensionField::Element py_plus_qy = NULL, x1_minus_px, x1_minus_qx, negqy;
+	ecPoint zero;
+	EF_q.scalarMultiply(zero, P, (Integer)(0), -1);
 	px = P.x;
 	py = P.y;
 	qx = Q.x;
 	qy = Q.y;
-
+	if (P == zero || Q == zero) {
+		if(P == Q)
+			return EF_q.field->one;
+		if (P == zero) {
+			EF_q.field->sub(x1_minus_qx, x1, qx);
+			return x1_minus_qx;
+		}
+		if (Q == zero) {
+			EF_q.field->sub(x1_minus_px, x1, px);
+			return x1_minus_px;
+		}
+	}
+	//std::cout << std::endl;
+	//EF_q.show(P);
+	//EF_q.show(Q);
 	EF_q.field->neg(negqy, qy);
 
 	if ((px == qx) && (py == negqy)) {
@@ -661,4 +677,46 @@ void verify_mobile(
 	//E_Fq.field->writeElement(c1);
 	cout << "\n b1c1: " << endl;
 	E_Fq.field->writeElement(b1c1);
+}
+
+ellipticCurveFq::Point hashToPoint(BigNumber num) {
+	// x = a ^ ((p + 1) / 4)
+	Integer Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
+	BigNumber eta("20000000000000000000000000000000000080005000000000000000000000000000000000004000200000008000000000000000000000000000000000020001");
+	ExtensionField Fp(Ip, (Integer)1);
+	ExtensionField::Element res, num_fp, den_fp;
+	
+
+	// Check Euler's criteria
+		// (p ^ 2 - 1) / 2)
+	std::string residue("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000001010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000001");
+	ExtensionField::Element tmp, tmp1, tmp2;
+	// Residue check
+	while (true) {
+		std::string strnum("0 ");
+		strnum.append(num.toDecString());
+		Fp.readElement(strnum, num_fp);
+		//x2 = x1 ^ 3 + x1
+		Fp.pow(tmp, num_fp, "11");
+		Fp.add(tmp1, tmp, num_fp);
+		Fp.pow(tmp2, tmp1, residue);
+		if (tmp2 == Fp.one) {
+			//std::cout << std::endl << "hash is: " << num.toDecString() << std::endl;
+			break;
+		}
+		else {
+			//break;
+			//std::cout << std::endl << "Increase hash... " << std::endl;
+			num = num + BigNumber(1);
+		}
+	}
+
+	int len2 = BN_num_bits(eta.bn); // Minus first sign bit
+	std::string strEta("");
+	for (int j = 0; j < len2; j++) {
+		strEta.append(std::to_string(BN_is_bit_set(eta.bn, len2 - j - 1)));
+	}
+	Fp.pow(res, tmp1, strEta);
+	ecPoint P_res(num_fp, res);
+	return P_res;
 }

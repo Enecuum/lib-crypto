@@ -38,22 +38,8 @@ extern "C" EXPORTED int test(int a, int b);
 EXPORTED ExtensionField::Element tatePairing(ecPoint &P, ecPoint &Q, ecPoint &S, ellipticCurveFq &EF_q);
 EXPORTED ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq);
 EXPORTED ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq& E_Fq);
-void verify_mobile(
-	std::string p,
-	std::string a,
-	std::string b,
-	std::string order,
-	std::string irred,
-	std::string gx,
-	std::string gy,
-	int k,
-	std::string s1x,
-	std::string s1y,
-	std::string s2x,
-	std::string s2y,
-	std::string pk_lpos,
-	std::string mhash,
-	std::string mpkx,
-	std::string mpky,
-	std::string strEta
-	);
+EXPORTED ellipticCurveFq::Point hashToPoint(BigNumber num);
+void verify_mobile(std::string p, std::string a, std::string b, std::string order, std::string irred,
+	std::string gx, std::string gy, int k, std::string s1x, std::string s1y, std::string s2x,
+	std::string s2y, std::string pk_lpos, std::string mhash, std::string mpkx,
+	std::string mpky, std::string strEta);

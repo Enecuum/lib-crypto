@@ -52,6 +52,7 @@ int main(int argc, char ** argv)
 	BigNumber a(1);
 	BigNumber b(0);
 	BigNumber p("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080003");
+
 	BigNumber order("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080004");
 
 	BigNumber g0x("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
@@ -59,6 +60,7 @@ int main(int argc, char ** argv)
 
 	BigNumber gx("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
 	BigNumber gy("2c022abadb261d2e79cb693f59cdeeeb8a727086303285e5e629915e665f7aebcbf20b7632c824b56ed197f5642244f3721c41c9d2e2e4aca93e892538cd198a");
+	BigNumber max_hash("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 	//BigNumber gx = g0x;
 	//BigNumber gy = g0y;
@@ -71,7 +73,7 @@ int main(int argc, char ** argv)
 	//if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
 	//	std::cout << "error" << endl;
 
-	BigNumber msk(8);// = getRandom(BigNumber(1223));
+	BigNumber msk(10000000);// = getRandom(BigNumber(1223));
 	cout << "MSK: " << msk.toDecString() << endl;
 	BigNumber q = order;	// G0 order
 
@@ -103,10 +105,17 @@ int main(int argc, char ** argv)
 	int KblockID = 123;
 	int LPoSID = 677321;
 	// r следует брать соучайно r = ZZ.random_element(q)
-	BigNumber r = getRandom(p);
-
+	BigNumber r = getRandom(max_hash);
 	std::cout << "Random r: " << r.toDecString() << endl;
+
+	//BigNumber qx("11c258fa2953a595d24e3f3b5d9f54683bf3dfa16b9e4fc45eeccba2059ebe7b158077d7e2f12ed783e61f63f0d35b4dfcc95eac339f1760af690491a9621601");
+	//BigNumber qy("6e737114083eacc07c8a5ce7e1ccfe769211b8aa59e6c3d94536d7ce2fbe41cae9cb19041211b6205a871cafa44a10a00a0e626d4bf7b3d4a874ea97b6ac1d6f");
+
+
 	EC_POINT *Q = mul(r, G, curve);
+	//EC_POINT *Q = EC_POINT_new(curve->curve);
+	//if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+
 
 	std::cout << "Q = r * G: ";
 	printPoint(Q, curve);
@@ -137,7 +146,7 @@ int main(int argc, char ** argv)
 	std::cout << "\r\n      Create signature" << endl;
 	
 	BigNumber M(200);
-	BigNumber r2  = getRandom(q);
+	BigNumber r2 = getRandom(q);
 	//cout << "r2: " << r2.toDecString() << endl;
 	EC_POINT *s1;
 	// R = rP
@@ -167,66 +176,27 @@ int main(int argc, char ** argv)
 	);
 	return 0;
 	*/
-/*
-	// set_random_seed(LPoSID+M)
-	// H = E.random_point()
-	// Тут хеширование, но пока берется "случайная" точка кривой
-	
-	
-	//BigNumber hx(681);
-	//BigNumber hy(256);
-	EC_POINT *H = hashToPoint(BigNumber(7), curve);
-	printPoint(H, curve);
-	// S2 = r*H + SecKey
-	// S = sQ + rH
-	EC_POINT *s2 = mul(r2, H, curve);
-	if (1 != EC_POINT_add(curve->curve, s2, s2, secret, NULL)) handleErrors();
 
-	std::cout << "S2: ";
-	printPoint(s2, curve);
-
-	std::cout << "      Verification" << "\r\n";
-	std::cout << "Weil pairing" << "\r\n";
-
-	BigNumber sx(0);
-	BigNumber sy(522);
-	EC_POINT *S = EC_POINT_new(curve->curve);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, S, sx.bn, sy.bn, NULL)) handleErrors();
-
-	BigNumber r1 = weilPairing(G0, s2, S, curve);
-	std::cout << "r1 = e(P, S)\t" << r1.decimal() << "\r\n";
-
-	BigNumber b1 = weilPairing(MPK, Q, S, curve);
-	std::cout << "b1 = e(MPK, Q)\t" << b1.decimal() << "\r\n";
-
-	BigNumber c1 = weilPairing(s1, H, S, curve);
-	std::cout << "c1 = e(R, H1)\t" << c1.decimal() << "\r\n";
-
-	BigNumber b1c1 = (b1 * c1) % p;
-	std::cout << "r1 = b1 * c1\t" << b1c1.decimal() << "\r\n";
-
-	*/
-	//BN_CTX_free(ctx);
-	//EC_POINT_free(secret);
-	
-	//EC_GROUP_free(curve.curve);
-	//}
-	//std::cout.clear();
-	//cout << "runtime = " << clock() / 1000.0 << endl; // время работы программы         
-	//system("pause");
 	Integer Ip, Im;
 	Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	Im = Integer(2);
 	string strIrred("2 1 1 6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
 	string strA("0 1");
 	string strB("0 0");
-	
+	string strG0_x("1 1971424652593645857677685913504949042673180456464917721388355467732670356866868453718540344482523620218083146279366045128738893020712321933640175997249379 4296897641464992034676854814757495000621938623767876348735377415270791885507945430568382535788680955541452197460367952645174915991662132695572019313583345");
+	string strG0_y("1 5439973223440119070103328012315186243431766339870489830477397472399815594412903491893756952248783128391927052429939035290789135974932506387114453095089572 3254491657578196534138971223937186183707778225921454196686815561535427648524577315556854258504535233566592842007776061702323300678216177012235337721726634");
 	ellipticCurve *ec = new ellipticCurve(Ip, Im, strIrred, strA, strB);
 	//ec->print();
 	ellipticCurveFq E_Fq(ec);
 
 	
-	ExtensionField::Element HFq_x, HFq_y, SFq_x, SFq_y;
+	ExtensionField::Element HFq_x, HFq_y, SFq_x, SFq_y, G0_x, G0_y;
+
+	E_Fq.field->readElement(strG0_x, G0_x);
+	E_Fq.field->readElement(strG0_y, G0_y);
+	ecPoint G0_fq(G0_x, G0_y);
+	ecPoint MPK_fq;
+	E_Fq.scalarMultiply(MPK_fq, G0_fq, (Integer)(msk.toDecString()), -1);
 
 	ecPoint secret_fq = mapToFq(check, curve, E_Fq);
 
@@ -241,14 +211,22 @@ int main(int argc, char ** argv)
 
 	//cout << "\n secret fq: " << endl;
 	//E_Fq.show(secret_fq);
-	BigNumber hash = getRandom(p);
+	BigNumber hash = getRandom(max_hash);
+	cout << "\n hash: " << hash.toDecString() << endl;
 	//string strHx_fq("1 6585938874884161190249790176567180373159829994480512034157897828690094321702398082583836641936540925052205593236857739108779400699876416733619250033001574 1114870903498799919300311051614230487702143776715306484413118861977974710144846490697848621314514171343204111400320074712855582002282753809846905090592511");
 	//string strHy_fq("1 5977369586974353026773600315229776563237092478572059568886286293271512008099964983767401181053880836241479041663079843436368298305692856067127602342710521 2161202195522849472617767678421059087248221940509956469640162759356556534804221688741829365093541793519766900881300788512903369980421169424075071068242390");
 	//E_Fq.field->readElement(strHx_fq, HFq_x);
 	//E_Fq.field->readElement(strHy_fq, HFq_y);
-	ecPoint H_fq = hashToPointFq(secret_fq, hash, E_Fq);
-	//cout << "\n H_fq: " << endl;
-	//E_Fq.show(H_fq);
+
+	//BigNumber yy = hashToPoint(hash);
+	//std::cout << std::endl << "yy: " << yy.toDecString() << std::endl;
+	//EC_POINT *H = EC_POINT_new(curve->curve);
+	//if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, H, hash.bn, yy.bn, NULL)) handleErrors();
+	
+	
+	ecPoint H_fq = hashToPoint(hash);//hashToPointFq(secret_fq, hash, E_Fq);
+	cout << "\n H_fq: " << endl;
+	E_Fq.show(H_fq);
 	ecPoint rH, S2_fq;
 	
 	E_Fq.scalarMultiply(rH, H_fq, (Integer)(r2.toDecString()), -1);//R=6*P, order of P is not required
@@ -256,8 +234,8 @@ int main(int argc, char ** argv)
 	//E_Fq.show(rH);
 
 	E_Fq.add(S2_fq,rH, secret_fq);//R=P+Q
-	//cout << "\n S2_fq: " << endl;
-	//E_Fq.show(S2_fq);
+	cout << "\n S2_fq: " << endl;
+	E_Fq.show(S2_fq);
 
 	BigNumber shash = getRandom(q);
 	//string strSx_fq("1 6159497620935257906557343540898005704075905690051056620736859984179681011970149193326830486125500760419791791564998991498449345753926314997987382523405921 3955639758400305255197132500245584107122348438917038996230137507748635098851063891808983517470373013192290448706270855321350612334250594749922405365544392");
@@ -268,9 +246,13 @@ int main(int argc, char ** argv)
 	cout << "\n S_fq: " << endl;
 	E_Fq.show(S_fq);
 
-	ecPoint G0_fq = mapToFq(G, curve, E_Fq);
-	ecPoint MPK_fq = mapToFq(MPK, curve, E_Fq);
-	ecPoint S1_fq = mapToFq(s1, curve, E_Fq);
+	//ecPoint G0_fq = mapToFq(G, curve, E_Fq);
+	//ecPoint MPK_fq = mapToFq(MPK, curve, E_Fq);
+	ecPoint S1_fq;
+	E_Fq.scalarMultiply(S1_fq, G0_fq, (Integer)(r2.toDecString()), -1);//R=6*P, order of P is not required
+	cout << "\n S1_fq: " << endl;
+	E_Fq.show(S1_fq);
+	//mapToFq(s1, curve, E_Fq);
 
 	//cout << "\n G0_fq: " << endl;
 	//E_Fq.show(G0_fq);
@@ -296,11 +278,11 @@ int main(int argc, char ** argv)
 	//	//cout << str3 << endl;
 	//	temp = "";
 	//}
-	
-	ExtensionField::Element rr = tatePairing(G0_fq, S2_fq, S_fq, E_Fq);
-	ExtensionField::Element bb = tatePairing(Q_Fq, MPK_fq, S_fq, E_Fq);
-	ExtensionField::Element cc = tatePairing(S1_fq, H_fq, S_fq, E_Fq);
-
+	ExtensionField::Element rr, bb, cc;
+	rr = tatePairing(S2_fq, G0_fq, S_fq, E_Fq);
+	bb = tatePairing(Q_Fq, MPK_fq, S_fq, E_Fq);
+	cc = tatePairing(H_fq, S1_fq, S_fq, E_Fq);
+	//return 0;
 	// TODO: cacl instead of hard-code
 	string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
 	BigNumber bnEta("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080002");
@@ -322,13 +304,13 @@ int main(int argc, char ** argv)
 	//E_Fq.field->pow(b1c1, bbcc, strEta);
 	cout << "\n r1: " << endl;
 	E_Fq.field->writeElement(r1);
-	//cout << "\n b1: " << endl;
-	//E_Fq.field->writeElement(b1);
-	//cout << "\n c1: " << endl;
-	//E_Fq.field->writeElement(c1);
+	cout << "\n b1: " << endl;
+	E_Fq.field->writeElement(b1);
+	cout << "\n c1: " << endl;
+	E_Fq.field->writeElement(c1);
 	cout << "\n b1c1: " << endl;
 	E_Fq.field->writeElement(b1c1);
-	cout << "\n Verified: " << E_Fq.field->areEEqual(r1, b1c1) << endl;
+	cout << "\n Verified: " << E_Fq.field->areEqual(r1, b1c1) << endl;
 	/**/
 	//int verify = (r1 == b1c1)
 	//cout << "\n Verified: " << verify << endl;
