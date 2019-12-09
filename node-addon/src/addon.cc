@@ -110,72 +110,73 @@ Napi::Object Point_Fq(const Napi::CallbackInfo& info) {
 	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
+Napi::Array polyToArr(ExtensionField::Element el, Napi::Env env) {
+	Napi::Array res = Napi::Array::New(env, el.size());
+	int len = el.size();
+	for(int i = 0; i < len; i++)
+    	res[i] = el[len - i - 1];
+	return res;
+}
+ExtensionField::Element arrToPoly(Napi::Array arr, ellipticCurveFq& E_Fq) {
+	std::string str = std::to_string(arr.Length() - 1);
+	for(int i = 0; i < arr.Length(); i++){
+		Napi::Value tmpx = arr[i];
+		str.append(" ");
+		str.append(tmpx.As<Napi::String>());
+	}
+	ExtensionField::Element res;
+	E_Fq.field->readElement(str, res);
+	return res;
+}
+
 Napi::Object SignTate(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
     NodeBN* h = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NodePT* secret = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NodePT* G = Napi::ObjectWrap<NodePT>::Unwrap(info[2].As<Napi::Object>());
-	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[3].As<Napi::Object>());
-    NCurve_Fq* ecurve = Napi::ObjectWrap<NCurve_Fq>::Unwrap(info[4].As<Napi::Object>());
+	Napi::Object G0_obj = info[3].As<Napi::Object>();
+	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[4].As<Napi::Object>());
+    NCurve_Fq* ecurve = Napi::ObjectWrap<NCurve_Fq>::Unwrap(info[5].As<Napi::Object>());
 
+	Napi::String G0x = G0_obj.Get("x").As<Napi::String>();
+	Napi::String G0y = G0_obj.Get("y").As<Napi::String>();
+
+	ExtensionField::Element G0_x, G0_y;
+	ecurve->E_Fq->field->readElement(G0x.Utf8Value(), G0_x);
+	ecurve->E_Fq->field->readElement(G0y.Utf8Value(), G0_y);
+	ecPoint G0_fq(G0_x, G0_y);
+	
 	BigNumber r2 = getRandom(curve->crv.order);
 	//std::cout << "r2: " << r2.toDecString() << std::endl;
 
-	EC_POINT *s1 = mul(r2.bn, G->p, &curve->crv);
-
+	ecPoint S1_fq;
+	ecurve->E_Fq->scalarMultiply(S1_fq, G0_fq, (Integer)(r2.toDecString()), -1);
+	
+	ecPoint secret_fq = mapToFq(secret->p, &curve->crv, *ecurve->E_Fq);
+	ecPoint H_fq = hashToPoint(h->bn);
+	//std::cout << "\n H_fq: " << std::endl;
+	//ecurve->E_Fq->show(H_fq);
 	// S2 = r*H + SecKey
 
 	ecPoint rH_Fq;	
-	
-	ecPoint secret_fq = mapToFq(secret->p, &curve->crv, *ecurve->E_Fq);
-	
-	ecPoint H_fq = hashToPointFq(secret_fq, h->bn, *ecurve->E_Fq);
-	//std::cout << "\n H_fq: " << std::endl;
-	//ecurve->E_Fq->show(H_fq);
-	ecurve->E_Fq->scalarMultiply(rH_Fq, H_fq, (Integer)(r2.toDecString()), -1);//R=6*P, order of P is not required
+	ecurve->E_Fq->scalarMultiply(rH_Fq, H_fq, (Integer)(r2.toDecString()), -1);
 
 	ecPoint S2_fq;
-	ecurve->E_Fq->add(S2_fq, rH_Fq, secret_fq);//R=P+Q
-	//let s2 = addon.addPoints(rH, secret, curve);
+	ecurve->E_Fq->add(S2_fq, rH_Fq, secret_fq);
 
 	//ecurve->E_Fq->show(S2_fq);
-	std::stringstream xx, yy;
-	ecurve->E_Fq->field->writeElement(S2_fq.x, xx);
-	ecurve->E_Fq->field->writeElement(S2_fq.y, yy);
-	//std::cout << xx.str() << std::endl;
-	std::vector<std::string> elementsX, elementsY;
-	std::string temp;
-	//int degree = S2_fq.x.size();
-	for(int i = 0; i < S2_fq.x.size(); i++)
-		elementsX.push_back(S2_fq.x[i]);
-	for(int i = 0; i < S2_fq.y.size(); i++)
-		elementsY.push_back(S2_fq.y[i]);
 
-	BigNumber s1_x;
-	BigNumber s1_y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, s1, s1_x.bn, s1_y.bn, NULL)) handleErrors();
 	Napi::Object resR = Napi::Object::New(env);
-
-	Napi::String ns1_x = Napi::String::New(env, s1_x.toHexString());
-	Napi::String ns1_y = Napi::String::New(env, s1_y.toHexString());
-    resR.Set(Napi::String::New(env, "x"), ns1_x);
-    resR.Set(Napi::String::New(env, "y"), ns1_y);
-
-    Napi::Object resS = Napi::Object::New(env);
-    Napi::Array arrX = Napi::Array::New(env, elementsX.size());
-    for(int i = 0; i < elementsX.size(); i++){
-    	arrX[i] = elementsX[elementsX.size() - i - 1];
-    }
-    Napi::Array arrY = Napi::Array::New(env, elementsX.size());
-    for(int i = 0; i < elementsY.size(); i++){
-    	arrY[i] = elementsY[elementsX.size() - i - 1];
-    }
-    
-    resS.Set(Napi::String::New(env, "x"), arrX);
-    resS.Set(Napi::String::New(env, "y"), arrY);
-
+	Napi::Object resS = Napi::Object::New(env);
     Napi::Object res = Napi::Object::New(env);
+
+    resR.Set(Napi::String::New(env, "x"), polyToArr(S1_fq.x, env));
+    resR.Set(Napi::String::New(env, "y"), polyToArr(S1_fq.y, env));
+
+	resS.Set(Napi::String::New(env, "x"), polyToArr(S2_fq.x, env));
+    resS.Set(Napi::String::New(env, "y"), polyToArr(S2_fq.y, env));
+
     res.Set(Napi::String::New(env, "r"), resR);
     res.Set(Napi::String::New(env, "s"), resS);
 	return res;
@@ -344,54 +345,62 @@ Napi::Number VerifyTate(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	
 	Napi::Object sign = info[0].As<Napi::Object>();
-	NodePT* s1 = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
-	NodeBN* h = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
-	NodePT* Q = Napi::ObjectWrap<NodePT>::Unwrap(info[3].As<Napi::Object>());
-	NodePT* G0 = Napi::ObjectWrap<NodePT>::Unwrap(info[4].As<Napi::Object>());
-	NodePT* MPK = Napi::ObjectWrap<NodePT>::Unwrap(info[5].As<Napi::Object>());
+	NodeBN* h = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
+	NodePT* Q = Napi::ObjectWrap<NodePT>::Unwrap(info[2].As<Napi::Object>());
+	Napi::Object G0_obj = info[3].As<Napi::Object>();
+	Napi::Object MPK_obj = info[4].As<Napi::Object>();
 	
-	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[6].As<Napi::Object>());
-    NCurve_Fq* ecurve = Napi::ObjectWrap<NCurve_Fq>::Unwrap(info[7].As<Napi::Object>());
+	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[5].As<Napi::Object>());
+    NCurve_Fq* ecurve = Napi::ObjectWrap<NCurve_Fq>::Unwrap(info[6].As<Napi::Object>());
+	
+	Napi::String G0x = G0_obj.Get("x").As<Napi::String>();
+	Napi::String G0y = G0_obj.Get("y").As<Napi::String>();
+	ExtensionField::Element G0_x, G0_y;
+	ecurve->E_Fq->field->readElement(G0x.Utf8Value(), G0_x);
+	ecurve->E_Fq->field->readElement(G0y.Utf8Value(), G0_y);
+	ecPoint G0_fq(G0_x, G0_y);
+
+	ExtensionField::Element MPK_x, MPK_y;
+	Napi::String MPKx = MPK_obj.Get("x").As<Napi::String>();
+	Napi::String MPKy = MPK_obj.Get("y").As<Napi::String>();
+	ecurve->E_Fq->field->readElement(MPKx.Utf8Value(), MPK_x);
+	ecurve->E_Fq->field->readElement(MPKy.Utf8Value(), MPK_y);
+	ecPoint MPK_fq(MPK_x, MPK_y);
 	
 	Napi::Object s2 = sign.Get("s").As<Napi::Object>();
+	Napi::Object s1 = sign.Get("r").As<Napi::Object>();
+
+	Napi::Array s1x = s1.Get("x").As<Napi::Array>();
+	Napi::Array s1y = s1.Get("y").As<Napi::Array>();
+	ExtensionField::Element S1Fq_x = arrToPoly(s1x, *ecurve->E_Fq);
+	ExtensionField::Element S1Fq_y = arrToPoly(s1y, *ecurve->E_Fq);
+	ecPoint S1_fq(S1Fq_x, S1Fq_y);
+
 	Napi::Array s2x = s2.Get("x").As<Napi::Array>();
 	Napi::Array s2y = s2.Get("y").As<Napi::Array>();
-	//
-	// -------- TODO: rewrite hardcode
-	//
-	std::string strS2x("1"), strS2y("1");
-	for(int i = 0; i < s2x.Length(); i++){
-		Napi::Value tmpx = s2x[i];
-		Napi::Value tmpy = s2y[i];
-		strS2x.append(" ");
-		strS2x.append(tmpx.As<Napi::String>());
-		strS2y.append(" ");
-		strS2y.append(tmpy.As<Napi::String>());
-	}
-	ExtensionField::Element S2Fq_x, S2Fq_y;
-	ecurve->E_Fq->field->readElement(strS2x, S2Fq_x);
-	ecurve->E_Fq->field->readElement(strS2y, S2Fq_y);
+	ExtensionField::Element S2Fq_x = arrToPoly(s2x, *ecurve->E_Fq);
+	ExtensionField::Element S2Fq_y = arrToPoly(s2y, *ecurve->E_Fq);
 	ecPoint S2_fq(S2Fq_x, S2Fq_y);
 
+
 	BigNumber seed = getRandom(curve->crv.order);
-	//std::cout << "seed: " << seed.toDecString() << std::endl;
+	std::cout << "seed: " << seed.toDecString() << std::endl;
 	ecPoint S_fq = hashToPointFq(S2_fq, seed, *ecurve->E_Fq);
 
-	ecPoint G0_fq = mapToFq(G0->p, &curve->crv, *ecurve->E_Fq);
+	//ecPoint G0_fq = mapToFq(G0->p, &curve->crv, *ecurve->E_Fq);
 
-	ecPoint MPK_fq = mapToFq(MPK->p, &curve->crv, *ecurve->E_Fq);
+	//ecPoint MPK_fq = mapToFq(MPK->p, &curve->crv, *ecurve->E_Fq);
 	ecPoint Q_Fq = mapToFq(Q->p, &curve->crv, *ecurve->E_Fq);
 
-	ecPoint H_fq = hashToPointFq(S2_fq, h->bn, *ecurve->E_Fq);
+	ecPoint H_fq = hashToPoint(h->bn);
 	//ecPoint H_fq = mapToFq(H->p, &curve->crv, *ecurve->E_Fq);
-	ecPoint S1_fq = mapToFq(s1->p, &curve->crv, *ecurve->E_Fq);
+	//ecPoint S1_fq = mapToFq(s1->p, &curve->crv, *ecurve->E_Fq);
 
-	ExtensionField::Element rr = tatePairing(G0_fq, S2_fq, S_fq, *ecurve->E_Fq);
+	ExtensionField::Element rr, bb, cc;
 
-	ExtensionField::Element bb = tatePairing(Q_Fq, MPK_fq, S_fq, *ecurve->E_Fq);
-
-	ExtensionField::Element cc = tatePairing(S1_fq, H_fq, S_fq, *ecurve->E_Fq);
-
+	rr = tatePairing(S2_fq, G0_fq, S_fq, *ecurve->E_Fq);
+	bb = tatePairing(Q_Fq, MPK_fq, S_fq, *ecurve->E_Fq);
+	cc = tatePairing(H_fq, S1_fq, S_fq, *ecurve->E_Fq);
 	std::string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
 
 	ExtensionField::Element r1, b1, c1;
@@ -418,9 +427,6 @@ Napi::Number VerifyTate(const Napi::CallbackInfo& info) {
 	//ecurve->E_Fq->field->writeElement(b1c1);
 
 	bool res = ecurve->E_Fq->field->areEqual(r1, b1c1);
-	//BigNumber res(1);
-	//std::cout << "\n res: " << res << std::endl;
-
   	return Napi::Number::New(info.Env(), res);
 }
 

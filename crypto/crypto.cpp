@@ -720,3 +720,50 @@ ellipticCurveFq::Point hashToPoint(BigNumber num) {
 	ecPoint P_res(num_fp, res);
 	return P_res;
 }
+
+bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq, ecPoint& Q_fq, ecPoint& G0_fq, ellipticCurveFq& E_Fq) {
+	BigNumber max_hash("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+	//BigNumber hash = getRandom(max_hash);
+	cout << "\n hash: " << hash.toDecString() << endl;
+
+	ecPoint H_fq = hashToPoint(hash);//hashToPointFq(secret_fq, hash, E_Fq);
+
+	BigNumber shash = getRandom(max_hash);
+	ecPoint S_fq = hashToPointFq(S1_fq, shash, E_Fq);
+
+	ExtensionField::Element rr, bb, cc;
+	rr = tatePairing(S2_fq, G0_fq, S_fq, E_Fq);
+	bb = tatePairing(Q_fq, MPK_fq, S_fq, E_Fq);
+	cc = tatePairing(H_fq, S1_fq, S_fq, E_Fq);
+	//return 0;
+	// TODO: cacl instead of hard-code
+	string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
+	BigNumber bnEta("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080002");
+
+	/*
+	  eta = (p^k - 1)/q
+	  tate pairing return value should be in `eta` degree
+	  num = eval_miller(P, Q+S)/eval_miller(P,  S)
+	  return (num^eta)
+	*/
+	ExtensionField::Element r1, b1, c1, b1c1;
+	E_Fq.field->pow(r1, rr, strEta);
+	E_Fq.field->pow(b1, bb, strEta);
+	E_Fq.field->pow(c1, cc, strEta);
+
+	ExtensionField::Element bbcc;
+	E_Fq.field->mul(b1c1, b1, c1);
+
+	bool areEqual = E_Fq.field->areEqual(r1, b1c1);
+	//E_Fq.field->pow(b1c1, bbcc, strEta);
+	cout << "\n r1: " << endl;
+	E_Fq.field->writeElement(r1);
+	cout << "\n b1: " << endl;
+	E_Fq.field->writeElement(b1);
+	cout << "\n c1: " << endl;
+	E_Fq.field->writeElement(c1);
+	cout << "\n b1c1: " << endl;
+	E_Fq.field->writeElement(b1c1);
+	cout << "\n Verified: " << areEqual << endl;
+	return areEqual;
+}

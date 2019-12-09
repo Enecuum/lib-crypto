@@ -8,31 +8,6 @@
 
 using namespace std;
 
-class Point
-{
-	private:
-		Point(BigNumber x, BigNumber y, EC_GROUP *curve) {
-			this->P = EC_POINT_new(curve);
-			if (1 != EC_POINT_set_affine_coordinates_GFp(curve, P, x.bn, y.bn, NULL)) return;
-		}
-		EC_POINT *P;
-		friend class Curve;
-		
-};
-
-std::string addSpaces(std::string str) {
-	std::string tmp("");
-	int len = str.size();
-	if ((str.size() % 2) != 0) {
-		str.insert(0, "0");
-		len++;
-	}
-	for (int i = 2; i < str.size(); i += 3) {
-		str.insert(i, " ");
-	}
-	return str;
-}
-
 int main(int argc, char ** argv)
 {
 	//OpenSSL_add_all_algorithms();
@@ -197,7 +172,8 @@ int main(int argc, char ** argv)
 	ecPoint G0_fq(G0_x, G0_y);
 	ecPoint MPK_fq;
 	E_Fq.scalarMultiply(MPK_fq, G0_fq, (Integer)(msk.toDecString()), -1);
-
+	cout << "\n MPK_fq: " << endl;
+	E_Fq.show(MPK_fq);
 	ecPoint secret_fq = mapToFq(check, curve, E_Fq);
 
 	/*
@@ -258,6 +234,11 @@ int main(int argc, char ** argv)
 	//E_Fq.show(G0_fq);
 
 	ecPoint Q_Fq = mapToFq(Q, curve, E_Fq);
+	ecPoint QQ_Fq;
+	E_Fq.scalarMultiply(QQ_Fq, G0_fq, (Integer)(r.toDecString()), -1);//R=6*P, order of P is not required
+
+	bool res = verifyTate(S1_fq, S2_fq, hash, MPK_fq, Q_Fq, G0_fq, E_Fq);
+	return 0;
 	//E_Fq.scalarMultiply(Q_Fq, G0_fq, (Integer)(msk.toDecString()), -1);
 	//cout << "\n Q_Fq: " << endl;
 	//E_Fq.show(Q_Fq);

@@ -41,7 +41,7 @@ var addon = require('./addon');
 	console.log("G: " + G.xy(curve));
 	curve.G = G;
 	//console.log(curve.G)
-	var msk = addon.BigNumber(8);
+	var msk = addon.BigNumber(10000000);
 
  	console.log("Creating MPK");
 	var MPK = addon.createMPK(msk, G0, curve);
@@ -113,8 +113,15 @@ var addon = require('./addon');
 			}
 		}
 	}
-
-	req.data.leader_sign = addon.sign_tate(req.data.m_hash, LPoSID, G, G0, secret, curve, e_fq);
+	let G0_fq = {
+		"x" : "1 1971424652593645857677685913504949042673180456464917721388355467732670356866868453718540344482523620218083146279366045128738893020712321933640175997249379 4296897641464992034676854814757495000621938623767876348735377415270791885507945430568382535788680955541452197460367952645174915991662132695572019313583345",
+		"y" : "1 5439973223440119070103328012315186243431766339870489830477397472399815594412903491893756952248783128391927052429939035290789135974932506387114453095089572 3254491657578196534138971223937186183707778225921454196686815561535427648524577315556854258504535233566592842007776061702323300678216177012235337721726634"
+	}
+	let MPK_fq = {
+		"x" : "1 5553161562309620134204294307547179611636685754291535214076054128059515506033993893714735433610207337513297007943745903960736280984281319771387455094363055 6689291821874770449783470798967833024384908153897387642241791007779898182075451742944983283446597677757107561868230869942692013197487003982057559827210919",
+		"y" : "1 1409647240359222769554276508179480635408566023738878356661595724530348198250043359650835609016647773316137383233659454103710745566316894573620890364518372 3885560331261099024236364110126283369754589356789796979215968181927252095476961502262491073346156231135118163091525459453361435352300956275516792143616474"
+	}
+	req.data.leader_sign = addon.sign_tate(req.data.m_hash, LPoSID, G, G0_fq, secret, curve, e_fq);
 	console.log(req.data.leader_sign);
 	//req.data.leader_sign = {"r":{"x":1199,"y":966},"s":{"x":1039,"y":885}}
 
@@ -126,10 +133,9 @@ var addon = require('./addon');
 // ------------------ PoA
 //
 	PK_LPoS = addon.getHash(req.data.mblock_data.k_hash.toString() + LPoSID.toString() + req.data.mblock_data.nonce.toString());
-	console.log(PK_LPoS)
+	console.log("PK_LPoS: " + PK_LPoS)
 	//let Qa = addon.createPK(PK_LPoS, G, curve);
-	let Qa = addon.toPoint(PK_LPoS, G, curve);
-	console.log("Qa: " + Qa.xy(curve));
+	
 	console.log("Verification...");
 	//console.log("Block verified: " + addon.verify(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve));
-	console.log("Block verified: " + addon.verify_tate(req.data.leader_sign, req.data.m_hash, Qa, G, G0, MPK, req.data.leader_id, p, curve, e_fq));
+	console.log("Block verified: " + addon.verify_tate(req.data.leader_sign, req.data.m_hash, PK_LPoS, G, G0_fq, MPK_fq, req.data.leader_id, p, curve, e_fq));
