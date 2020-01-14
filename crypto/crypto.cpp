@@ -137,7 +137,7 @@ vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, i
 	for (size_t i = 0; i < ids.size(); i++)
 	{
 		BigNumber temp(0);
-		for (int j = 0; j < power; j++)
+		for (size_t j = 0; j < power; j++)
 			temp = temp + (BigNumber(arrayA[j]) * (bpow(BigNumber(ids[i]), power - j)));
 		arrayK.insert(arrayK.end(), (temp + secretM) % q);
 	}

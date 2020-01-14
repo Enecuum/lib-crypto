@@ -35,7 +35,6 @@ public:
 
     //Return R=(A+B)%p
     Element& add(Element& R, const Element& A, const Element& B) const;
-    Element& addin(Element& R, const Element& A) const;
     //Return R=(A-B)%p
     Element& sub(Element& R, const Element& A, const Element& B) const;
     //Return R=-B
@@ -59,7 +58,6 @@ public:
 	void readElement(std::string str, Element& P);
     void writeElement(Element& A);
 	void writeElement(Element& A, std::stringstream& ss);
-    bool isElement(const Element& A);
 	bool areEqual(Element& A, const Element& B) const;
 };
 class ecPoint
@@ -92,7 +90,6 @@ public:
 	ExtensionField* Kptr; //elliptic curve over field K
 	Element A,B,C; //equation of curve, depending upon the char(K)
     
-    ellipticCurve();
     ellipticCurve(Integer p, Integer m, std::string strIrred, std::string strA, std::string strB);
     ~ellipticCurve();
 	
@@ -111,7 +108,6 @@ public:
     ExtensionField* field;//coordinates of point belong to this field F(q^d)
     //hence arithmetic on co-ordinates is done in this field
     Point identity;
-    ellipticCurveFq();
     ellipticCurveFq(ellipticCurve* e);
     ~ellipticCurveFq();
     //Q=-P
@@ -124,10 +120,7 @@ public:
     Point& add(Point &R,Point &P, Point &Q);
     //R=k*P
     Point& scalarMultiply(Point&R, Point& P, Integer k, Integer order);//order of P 
-    //R=a*P+b*Q
-    void compute(ecPoint& R,Integer a, ecPoint& P,Integer b,ecPoint& Q,Integer n);//ord(P)=n
-    bool verifyPoint(const Point &P) const;
+
     void show(Point& P);
-    void show();
-   
+    void show();   
 };

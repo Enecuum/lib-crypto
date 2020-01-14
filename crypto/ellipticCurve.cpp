@@ -14,28 +14,11 @@ ExtensionField::ExtensionField(Integer p, Integer m)
     Fp_X = Poly1Dom< primeField, Dense >( Fp, Indeter("X") );
     if(m==1)
         Fp_X.assign(irred,(Element)p);
-    else
-    {
-		long deg = 3;
-		
-		//Fp_X.init(irred, Degree(deg));
-		////P[(size_t)deg]
-		//Fp_X.assign(irred, 5, Integer(5));
-		//Fp_X.assign(irred, 1, Integer(4));
-			//irred[0] = Integer(5)
-		std::istringstream stream(std::string("12 1 7 16030569034403128277756688287498649515636838101184337499778392980116222246896 16030569034403128277756688287498649515636838101184337499778392980116222246710 16030569034403128277756688287498649515636838101184337499778392980116222246885 2309 2992 16030569034403128277756688287498649515636838101184337499778392980116222237244 16030569034403128277756688287498649515636838101184337499778392980116222225365 3429 48555 63122 37991"));
 
-		
-        //cout<<"Give an irreducible polynomial of degree "<<m<<": ";
-        Fp_X.read(stream,irred);
-        //cout<<endl;
-		Fp_X.write(cout, irred);
-    }
     primeField::Element tmp;
     Fp_X.assign(zero,Fp_X.zero);
     Fp_X.assign(one,Fp_X.one);
     Fp_X.assign(mOne,Fp_X.mOne);
-    
 }
 ExtensionField::ExtensionField(Integer p, Integer m, std::string strIrred)
 {
@@ -47,19 +30,13 @@ ExtensionField::ExtensionField(Integer p, Integer m, std::string strIrred)
 		Fp_X.assign(irred, (Element)p);
 	else
 	{
-
 		std::istringstream stream(strIrred);
-
-		//cout<<"Give an irreducible polynomial of degree "<<m<<": ";
 		Fp_X.read(stream, irred);
-		//cout<<endl;
-		//Fp_X.write(cout, irred);
 	}
 	primeField::Element tmp;
 	Fp_X.assign(zero, Fp_X.zero);
 	Fp_X.assign(one, Fp_X.one);
 	Fp_X.assign(mOne, Fp_X.mOne);
-
 }
 ExtensionField ExtensionField::operator=(const ExtensionField& E)
 {
@@ -78,11 +55,7 @@ ExtensionField ExtensionField::operator=(const ExtensionField& E)
 ExtensionField::Element& ExtensionField::add(Element& R, const Element& A, const Element& B) const
 {
     Fp_X.add(R,A,B);
-    return R;
-}
-ExtensionField::Element& ExtensionField::addin(Element& R, const Element& A) const
-{
-    Fp_X.addin(R,A);
+
     return R;
 }
 //Return R=(A-B)%p
@@ -160,13 +133,11 @@ ExtensionField::Element& ExtensionField::inv(Element& I, const Element& A) const
         return I;
     Fp_X.assign(I,Fp_X.zero);
     return I;
-
 }
 ExtensionField::Element& ExtensionField::additiveInv(Element& I, const Element& A) const
 {
     Fp_X.sub(I,Fp_X.zero,A);
     return I;
-
 }
 
 //Return Q, such that Q=A/B=A*(inverse of B),
@@ -216,16 +187,7 @@ void ExtensionField::writeElement(Element& A)
 }
 void ExtensionField::writeElement(Element& A, std::stringstream& ss)
 {
-	//ss << "( ";
 	Fp_X.write(ss, A);
-	//ss << " )";
-}
-bool ExtensionField::isElement(const Element& A)
-{
-	Degree d=Fp_X.degree(A);
-	if(d._deg<m)
-	    return true;
-	return false;
 }
 
 ecPoint::ecPoint(bool b)
@@ -255,27 +217,6 @@ bool ecPoint::operator==(const ecPoint& t) const
 bool ecPoint::operator< (const ecPoint& t) const
 {return identity ? !t.identity : (!t.identity && (x<t.x || (x==t.x && y<t.y)));}
 
-
-
-ellipticCurve::ellipticCurve()
-{
-    Integer p, m;
-    cout<<"Write p and m: ";
-    cin>>p>>m;
-    Kptr=new ExtensionField(p,m);
-    cout<<"Write A: ";
-    Kptr->readElement( A);
-    cout<<"Write B: ";
-    Kptr->readElement( B);
-    cout<<"type? ";
-    cin>>type;
-    if(type==2)
-    {
-        cout<<"Write C: ";
-        Kptr->readElement( C);
-    }
-    cout<<endl;
-}
 ellipticCurve::ellipticCurve(Integer p, Integer m, std::string strIrred, std::string strA, std::string strB)
 {
 	Kptr = new ExtensionField(p, m, strIrred);
@@ -312,27 +253,10 @@ void ellipticCurve::print()
     cout<<"type"<<type<<endl;
 }
 
-ellipticCurveFq::ellipticCurveFq()
-{
-    ec=new ellipticCurve();
-    cout<<"degree d? ";
-    cin>>d;
-    if(d!=1)
-        field=new ExtensionField(ec->Kptr->p,(ec->Kptr->m)*d);
-    else
-        field=ec->Kptr;
-    identity.identity=true;
-    this->d=d;
-}
 ellipticCurveFq::ellipticCurveFq(ellipticCurve* e)
 {
     ec=e;
-    /*cout<<"degree d? ";
-    cin>>d;
-    if(d!=1)
-        field=new ExtensionField(ec->Kptr->p,(ec->Kptr->m)*d);
-    else*/
-        field=ec->Kptr;
+    field=ec->Kptr;
     identity.identity=true;
     this->d=d;
 }
@@ -350,35 +274,14 @@ const ellipticCurveFq::Point& ellipticCurveFq::inv(Point& Q, const Point &P)
     }
     Q.identity=false;
     Point T;
-    switch(ec->type)
-    {
-        case 0:
-            Q.x=P.x;
-            field->additiveInv(Q.y,P.y); //Q.y+P.y=0
-            return Q;
-            
-        case 1:
-            Q.x=P.x;
-            field->add(Q.y,P.y,P.x);
-            //Q.y+=Q.x;
-            return Q;
-            
-        case 2:
-            Q.x=P.x;
-            field->add(Q.y,P.y,ec->C);
-
-            //Q.y+=ec->C;
-            return Q;
-        default:
-            return Q;
-            
-    }
+    Q.x=P.x;
+    field->additiveInv(Q.y,P.y); //Q.y+P.y=0
+    return Q;
 }
 bool ellipticCurveFq::isInv(const Point& Q, const Point &P) //is Q+P=point at inifinity?
 {
     Point R;
     inv(R,P);
-    //cout<<"At inverse check"; show(R);
     if(R==Q)
         return true;
     return false;
@@ -399,50 +302,19 @@ ellipticCurveFq::Point& ellipticCurveFq::Double(Point &R,Point &P)
     fieldElement _3x12,_2y,_3x12pA,_2x,_x,slope_x;
     fieldElement xpy,Bdx12,slopex,slopex_x;
     fieldElement x12pA,ypC,xpx,slopexpx;
-    switch(ec->type)
-    {
-        case 0:
-            
-            field->scalarMultiply(_3x12,x12,3);
-            field->scalarMultiply(_2y,P.y,2);
-            field->add(_3x12pA,_3x12,ec->A);
-            field->div(slope,_3x12pA,_2y);
-            field->sqr(slopeSquare,slope);
-            field->scalarMultiply(_2x,P.x,2);
-            field->sub(x,slopeSquare,_2x);
-            field->sub(_x,P.x,x);
-            field->sub(y,field->mul(slope_x,slope,_x),P.y);
+
+    field->scalarMultiply(_3x12,x12,3);
+    field->scalarMultiply(_2y,P.y,2);
+    field->add(_3x12pA,_3x12,ec->A);
+    field->div(slope,_3x12pA,_2y);
+    field->sqr(slopeSquare,slope);
+    field->scalarMultiply(_2x,P.x,2);
+    field->sub(x,slopeSquare,_2x);
+    field->sub(_x,P.x,x);
+    field->sub(y,field->mul(slope_x,slope,_x),P.y);
         
-            R.x=x;
-            R.y=y;
-            return R;
-
-        case 1:
-
-            field->add(xpy,x12,P.y);
-            field->div(slope,xpy,P.x);
-            field->div(Bdx12,ec->B,x12);
-            field->add(x,x12,Bdx12);
-            field->mul(slopex,slope,x);
-            field->add(slopex_x,slopex,x);
-            field->add(y,x12,slopex_x);
-            R.x=x;
-            R.y=y;
-            return R;
-        case 2:
-            
-            field->add(x12pA,x12,ec->A);
-            field->div(slope,x12pA,ec->C);
-            field->sqr(slopeSquare,slope);
-            x=slopeSquare;
-            field->add(ypC,P.y,ec->C);
-            field->add(xpx,P.x,x);
-            field->mul(slopexpx,xpx,slope);
-            field->add(y,ypC,slopexpx);
-            R.x=x;
-            R.y=y;
-            return R;
-    } 
+    R.x=x;
+    R.y=y;
     return R;
 }
 ellipticCurveFq::Point& ellipticCurveFq::add(Point &R,Point &P, Point &Q) 
@@ -476,37 +348,13 @@ ellipticCurveFq::Point& ellipticCurveFq::add(Point &R,Point &P, Point &Q)
     field->div(slope,y2m1,x2m1);
     field->sqr(slopeSquare,slope);
     field->add(x1p2,P.x,Q.x);
-    switch(ec->type)
-    {
-        case 0:
-            field->sub(x,slopeSquare,x1p2);
-            field->sub(x1m3,P.x,x);
-            field->mul(slopex1m3,slope,x1m3);
-            field->sub(y,slopex1m3,P.y);
-            R.x=x;
-            R.y=y;
-            return R;
-        case 1:
-            field->add(x1p2pA,x1p2,ec->A);
-            field->add(x1p2pApS,x1p2pA,slope);
-            field->add(x,x1p2pApS,slopeSquare);
-            field->add(x1m3,P.x,x);
-            field->mul(slopex1m3,slope,x1m3);
-            field->add(slopex1m3px3,slopex1m3,x);
-            field->add(y,slopex1m3px3,P.y);
-            R.x=x;
-            R.y=y;
-            return R;
-        case 2:
-            field->add(x,slopeSquare,x1p2);
-            field->add(x1m3,P.x,x);
-            field->mul(slopex1m3,slope,x1m3);
-            field->add(y1pC,P.y,ec->C);
-            field->add(y,y1pC,slopex1m3);
-            R.x=x;
-            R.y=y;
-            return R;
-    } 
+
+    field->sub(x,slopeSquare,x1p2);
+    field->sub(x1m3,P.x,x);
+    field->mul(slopex1m3,slope,x1m3);
+    field->sub(y,slopex1m3,P.y);
+    R.x=x;
+    R.y=y;
     return R;
 }
 void ellipticCurveFq::show(Point& P)
@@ -540,11 +388,6 @@ ellipticCurveFq::Point& ellipticCurveFq::scalarMultiply(Point&R, Point& P, Integ
     {
         if(k%2)
         {
-            /*if(k==1)
-            {
-                show(R);
-                show(acc);
-            }*/
             add(temp,R,acc);
             R=temp;
         }
@@ -554,92 +397,21 @@ ellipticCurveFq::Point& ellipticCurveFq::scalarMultiply(Point&R, Point& P, Integ
     }
     return R;
 }
-bool ellipticCurveFq::verifyPoint(const Point &P) const
-{
-    if(P.identity)
-        return true;
-    fieldElement rhs,x2,y2,x2pAx,x2pA,xpA,xpAx2,lhs,xy,cy;
-    field->sqr(x2,P.x);
-    field->sqr(y2,P.y);
-    
-    switch (ec->type) 
-    {
-        case 0:
-            field->add(x2pA,x2,ec->A);
-            field->mul(x2pAx,x2pA,P.x);
-            field->add(rhs,x2pAx,ec->B);
-            /*field->writeElement(rhs)<<endl;  
-            field->writeElement(y2)<<endl;  
-            */
-            if(y2==rhs)
-                return true;
-            else 
-                return false;
-        case 1:
-            field->add(xpA,P.x,ec->A);
-            field->mul(xpAx2,xpA,x2);
-            field->add(rhs,xpAx2,ec->B);
-            field->mul(xy,P.x,P.y);
-            field->add(lhs,y2,xy);
-            if(lhs==rhs)
-                return true;
-            else 
-                return false;
-        case 2:
-            field->add(x2pA,x2,ec->A);
-            field->mul(x2pAx,x2pA,P.x);
-            field->add(rhs,x2pAx,ec->B);
-            field->mul(cy,ec->C,P.y);
-            field->add(lhs,y2,cy);
-            if(lhs==rhs)
-                return true;
-            else 
-                return false;
-        default:
-            return false;
-    }
-}
 /*type 0: E/K, char(K)!=2: y2 = x3+ax+b,
  type 1: non-supersingular E/F2m: y2 + xy = x3+ax2+b,
  tyep 2: supersingular E/F2m: y2 + cy = x3 + ax + b*/
 void ellipticCurveFq::show()
 {
     cout<<"Elliptic Curve Defined by ";
-    switch(ec->type)
-    {
-        case 0: 
-            cout<<"y^2 = x^3 + "; 
-            field->writeElement(ec->A);
-            cout<<"x + ";
-            field->writeElement(ec->B);
-            cout<<endl;
-            break;
-        case 1:
-            cout<<"y^2 + xy = x^3 + "; 
-            field->writeElement(ec->A);
-            cout<<"x^2 + ";
-            field->writeElement(ec->B);
-            cout<<endl;
-            break;
-        case 2:
-            cout<<"y^2 + "; 
-            field->writeElement(ec->C);
-            cout<<"y = x^3 + ";
-            field->writeElement(ec->A);
-            cout<<"x + ";
-            field->writeElement(ec->B);
-            cout<<endl;
-            break;
-    }
+
+    cout<<"y^2 = x^3 + "; 
+    field->writeElement(ec->A);
+    cout<<"x + ";
+    field->writeElement(ec->B);
+    cout<<endl;
+
     cout<<" over finite field in X of size "<<field->p<<"^"<<field->m;
     cout<<" with irreducible polynomial ";
     field->writeElement(field->irred);
     cout<<endl;
-}
-void ellipticCurveFq::compute(ecPoint& R,Integer a, ecPoint& P,Integer b,ecPoint& Q,Integer n)
-{
-    ecPoint t1,t2;
-    scalarMultiply(t1,P,a,n);
-    scalarMultiply(t2,Q,b,n);
-    add(R,t1,t2);
 }
