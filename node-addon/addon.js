@@ -60,11 +60,11 @@ module.exports.sign = function (M, leadID, G, G0, secret, curve){
 	};
 }
 
-module.exports.sign_tate = function (M, leadID, G, G0, secret, curve, ecurve){
-	console.log("hash = " + getHash(M.toString() + leadID.toString()));
+module.exports.sign_tate = function (M, leadID, G0, secret, curve, ecurve){
+	//console.log("hash = " + getHash(M.toString() + leadID.toString()));
 	var h = addon.BigNumber(getHash(M.toString() + leadID.toString()));
 
-	let res = addon.signTate(h, secret, G, G0, curve, ecurve);
+	let res = addon.signTate(h, secret, G0, curve, ecurve);
 	return res;
 }
 
@@ -95,11 +95,11 @@ module.exports.verify = function (sign, M, Q, G, G0, MPK, leadID, p, curve){
 		return 0;
 }
 
-module.exports.verify_tate = function (sign, M, PK_LPoS, G, G0, MPK, leadID, p, curve, ecurve ){
+module.exports.verify_tate = function (sign, M, PK_LPoS, G0, MPK, leadID, curve, ecurve ){
 	var h = addon.BigNumber(getHash(M.toString() + leadID.toString()));
-
-	let Q = addon.toPoint(PK_LPoS, G, curve);
-	console.log("Qa: " + Q.xy(curve));
+	PK_LPoS = addon.BigNumber(PK_LPoS);
+	let Q = addon.getQ(PK_LPoS, curve, ecurve);
+	//console.log("Qa: " + Q.xy(curve));
 	let res = addon.verifyTate(sign, h, Q, G0, MPK, curve, ecurve);
 	return res;
 }

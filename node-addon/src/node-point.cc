@@ -76,7 +76,6 @@ Napi::Value NodePT::getY(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value NodePT::isInfinity(const Napi::CallbackInfo& info) {
-    Napi::Env env = info.Env();
     NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
     int ret = 0;
     if (EC_POINT_is_at_infinity(curve->crv.curve, this->p))

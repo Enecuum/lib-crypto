@@ -81,9 +81,9 @@ BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
 EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, Curve *curve) {
 	EC_POINT *secret = EC_POINT_new(curve->curve);
 	EC_POINT *buff = EC_POINT_new(curve->curve);
-	for (int i = 0; i < proj.size(); i++) {
+	for (size_t i = 0; i < proj.size(); i++) {
 		BigNumber lambda(1);
-		for (int j = 0; j < proj.size(); j++) {
+		for (size_t j = 0; j < proj.size(); j++) {
 			if (i != j) {
 				//lamb = (lamb * (0-coalition[j]))/(coalition[i]-coalition[j]) % q
 				BigNumber nom = msub(BigNumber(0), BigNumber(coalition[j]), q);
@@ -116,7 +116,9 @@ EC_POINT* hashToPoint(BigNumber hash, Curve *curve) {
 vector<int> generatePoly(int power) {
 	//srand(time(0));
 	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
-	vector<int> arrayA = { 10 };
+	// Poly: 1077x + 5x^2 + 6x^3 + 8x^4 + x^5
+	// {1, 8, 6, 5, 1077}
+	vector<int> arrayA = { 5, 1077 };
 	return arrayA;
 }
 
@@ -127,25 +129,33 @@ vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, i
 	//participantN = 10;
 	//sufficientK = 6;
 
-	int power = sufficientK - 1;
+	size_t power = sufficientK - 1;
 
 	vector<int> arrayA = generatePoly(power);
 
 	vector<BigNumber> arrayK;
-	for (int i = 0; i < ids.size(); i++)
+	for (size_t i = 0; i < ids.size(); i++)
 	{
-		int temp = 0;
+		BigNumber temp(0);
 		for (int j = 0; j < power; j++)
-			temp += arrayA[j] * (pow(ids[i], power - j));
-		arrayK.insert(arrayK.end(), (BigNumber(temp) + secretM) % q);
+			temp = temp + (BigNumber(arrayA[j]) * (bpow(BigNumber(ids[i]), power - j)));
+		arrayK.insert(arrayK.end(), (temp + secretM) % q);
 	}
 	return arrayK;
+}
+
+BigNumber bpow(BigNumber a, int n) {
+	BigNumber res(1);
+	for (int i = 0; i < n; i++) {
+		res = res * a;
+	}
+	return res;
 }
 
 /* Get shadows of secret key (ss_i = coalition[i] * Q)*/
 vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *Q, Curve *curve) {
 	vector<EC_POINT*> res;
-	for (int i = 0; i < coalition.size(); i++) {
+	for (size_t i = 0; i < coalition.size(); i++) {
 		EC_POINT *p = mul(shares[coalition[i] - 1].bn, Q, curve);
 		res.push_back(p);
 	}
@@ -216,8 +226,7 @@ BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, 
 	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
 
 	BigNumber slope;
-	//cout << "px:\t" << px.decimal() << " py:\t" << py.decimal() << endl;
-	//cout << "qx:\t" << qx.decimal() << " qy:\t" << qy.decimal() << endl;
+
 	if (((px == qx) == 0) && ((((py + qy) % curve->field) == 0) == 0)) {
 		return (x1 - px);
 	}
@@ -227,7 +236,6 @@ BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, 
 	else {
 		slope = mdiv((py - qy), (px - qx), curve->field);
 	}
-	int s = slope.decimal();
 	BigNumber num = (y1 - py - (slope * (x1 - px)));
 	BigNumber den = (x1 + px + qx - (slope * slope));
 	return mdiv(num, den, curve->field);
@@ -238,7 +246,7 @@ BigNumber miller(string m, EC_POINT *P, const BigNumber &x1, const BigNumber &y1
 	if (1 != EC_POINT_copy(T, P)) handleErrors();
 	BigNumber gret;
 	BigNumber f(1);
-	for (int i = 0; i < m.size(); i++) {
+	for (size_t i = 0; i < m.size(); i++) {
 		f = (f * (f * g(T, T, x1, y1, curve))) % curve->field;
 		//T = T + T;
 		if (1 != EC_POINT_dbl(curve->curve, T, T, NULL)) handleErrors();

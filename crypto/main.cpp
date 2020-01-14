@@ -8,6 +8,22 @@
 
 using namespace std;
 
+std::string dectox_int(Integer num)
+{
+	std::stringstream ss;
+	std::vector<int> tmp;
+	while(num != 0)
+	{
+		Integer rest = num % 16;
+		num /= 16;
+		tmp.push_back(rest);
+	}
+	for (int i = (tmp.size() - 1); i >= 0; i--)
+		ss << std::hex << tmp[i];
+	return std::string(ss.str());
+}
+
+
 int main(int argc, char ** argv)
 {
 	//OpenSSL_add_all_algorithms();
@@ -30,21 +46,21 @@ int main(int argc, char ** argv)
 
 	BigNumber order("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080004");
 
-	BigNumber g0x("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
-	BigNumber g0y("2c022abadb261d2e79cb693f59cdeeeb8a727086303285e5e629915e665f7aebcbf20b7632c824b56ed197f5642244f3721c41c9d2e2e4aca93e892538cd198a");
+	//BigNumber g0x("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
+	//BigNumber g0y("2c022abadb261d2e79cb693f59cdeeeb8a727086303285e5e629915e665f7aebcbf20b7632c824b56ed197f5642244f3721c41c9d2e2e4aca93e892538cd198a");
 
 	BigNumber gx("2920f2e5b594160385863841d901a3c0a73ba4dca53a8df03dc61d31eb3afcb8c87feeaa3f8ff08f1cca6b5fec5d3f2a4976862cf3c83ebcc4b78ebe87b44177");
 	BigNumber gy("2c022abadb261d2e79cb693f59cdeeeb8a727086303285e5e629915e665f7aebcbf20b7632c824b56ed197f5642244f3721c41c9d2e2e4aca93e892538cd198a");
 	BigNumber max_hash("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
+	BigNumber orderQ("3298c");
 	//BigNumber gx = g0x;
 	//BigNumber gy = g0y;
 	cout << "a: " << a.toDecString() << endl;
 	cout << "b: " << b.toDecString() << endl;
 	cout << "p: " << p.toDecString() << endl;
-	cout << "G0: (" << g0x.toDecString() << " " << g0y.toDecString() << ")" << endl;
+	//cout << "G0: (" << g0x.toDecString() << " " << g0y.toDecString() << ")" << endl;
 	cout << "order: " << order.toDecString() << endl;
-	Curve *curve = new Curve(a, b, p, order, g0x, g0y);
+	Curve *curve = new Curve(a, b, p, order, gx, gy);
 	//if (NULL == (curve1 = create_curve(a, b, p, order, g0x, g0y)))
 	//	std::cout << "error" << endl;
 
@@ -59,17 +75,17 @@ int main(int argc, char ** argv)
 	//printPoint(tst, cv.getCurve());
 
 
-	EC_POINT *G0 = EC_POINT_new(curve->curve);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
+	//EC_POINT *G0 = EC_POINT_new(curve->curve);
+	//if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, G0, g0x.bn, g0y.bn, NULL)) handleErrors();
 	EC_POINT *G = EC_POINT_new(curve->curve);
 	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, G, gx.bn, gy.bn, NULL)) handleErrors();
 
-	std::cout << "G0: ";
-	printPoint(G0, curve);
-	EC_POINT *MPK = createMPK(msk, G0, curve);
+	//std::cout << "G0: ";
+	//printPoint(G0, curve);
+	//EC_POINT *MPK = createMPK(msk, G0, curve);
 
-	std::cout << "MPK: ";
-	printPoint(MPK, curve);
+	//std::cout << "MPK: ";
+	//printPoint(MPK, curve);
 
 	std::cout << "\r\n      PKG keys generation \r\n";
 
@@ -77,47 +93,77 @@ int main(int argc, char ** argv)
 	// Второй генератор G (gens[1], 1158, 92)
 	// Соучайный элемент из поля q = 13 (поля порядка gens[1])
 	// TODO: set_random_seed(LPoSID + KblockID)
-	int KblockID = 123;
-	int LPoSID = 677321;
+
 	// r следует брать соучайно r = ZZ.random_element(q)
 	BigNumber r = getRandom(max_hash);
 	std::cout << "Random r: " << r.toDecString() << endl;
 
-	//BigNumber qx("11c258fa2953a595d24e3f3b5d9f54683bf3dfa16b9e4fc45eeccba2059ebe7b158077d7e2f12ed783e61f63f0d35b4dfcc95eac339f1760af690491a9621601");
-	//BigNumber qy("6e737114083eacc07c8a5ce7e1ccfe769211b8aa59e6c3d94536d7ce2fbe41cae9cb19041211b6205a871cafa44a10a00a0e626d4bf7b3d4a874ea97b6ac1d6f");
+	Integer Ip, Im;
+	Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
+	Im = Integer(2);
+	string strIrred("2 1 1 6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
+	string strA("0 1");
+	string strB("0 0");
+	string strG0_x("1 1971424652593645857677685913504949042673180456464917721388355467732670356866868453718540344482523620218083146279366045128738893020712321933640175997249379 4296897641464992034676854814757495000621938623767876348735377415270791885507945430568382535788680955541452197460367952645174915991662132695572019313583345");
+	string strG0_y("1 5439973223440119070103328012315186243431766339870489830477397472399815594412903491893756952248783128391927052429939035290789135974932506387114453095089572 3254491657578196534138971223937186183707778225921454196686815561535427648524577315556854258504535233566592842007776061702323300678216177012235337721726634");
+	ellipticCurve *ec = new ellipticCurve(Ip, Im, strIrred, strA, strB);
+	//ec->print();
+	ellipticCurveFq E_Fq(ec);
 
+	ecPoint tmpQ;// = hashToPoint(max_hash);
+	ecPoint tmp;
+	ecPoint zero;
+	int isZero = 1;
+	E_Fq.scalarMultiply(zero, tmpQ, (Integer)(0), -1);
+	do {
+		BigNumber qhash("7cd925afaffb8466029213a05ae0faaff9c533dfb3ae446dbfcb971e45e2cacf");// = getRandom(max_hash);
+		tmpQ = hashToPoint(qhash);
+		E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
+		isZero = (tmp == zero);
+		std::cout << "qhash: " << qhash.toDecString() << " " << isZero << endl;
+	} while (isZero);
+	cout << "\n tmpQ: " << endl;
+	E_Fq.show(tmpQ);
+	E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
 
-	EC_POINT *Q = mul(r, G, curve);
-	//EC_POINT *Q = EC_POINT_new(curve->curve);
-	//if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	BigNumber qx(dectox_int(tmp.x[0]));
+	BigNumber qy(dectox_int(tmp.y[0]));
 
+	EC_POINT *Q = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
 
-	std::cout << "Q = r * G: ";
+	std::cout << "Q: ";
 	printPoint(Q, curve);
-	/*
-	std::cout << "Key sharing: " << endl;
-	vector<int> ids = { 1, 55, 10 };
-	vector<BigNumber> shares = shamir(msk, ids, 3, 2, q);
-	for (int i = 0; i < shares.size(); i++)
-		std::cout << "(" << shares[i].decimal() << "), ";
 
-	vector<int> coalition = {1, 3 };
+	std::cout << "Key sharing: " << endl;
+	vector<int> ids;// = { 1, 55, 10 };
+	for (int i = 0; i < 100; i++)
+		ids.push_back(i + 1);
+	vector<BigNumber> shares = shamir(msk, ids, 100, 3, q);
+	for (int i = 0; i < shares.size(); i++)
+		std::cout << "(" << shares[i].toDecString() << "), ";
+
+	vector<int> coalition = { 1, 55, 10 };
+	//for (int i = 0; i < 5; i++)
+	//	coalition.push_back(i + 1);
 	std::cout << "\r\nShadows: " << "\r\n";
 	vector<EC_POINT*> proj = keyProj(coalition, shares, Q, curve);
 	for (int i = 0; i < proj.size(); i++) {
 		printPoint(proj[i], curve);
 	}
-	vector<int> coalition2 = { 1, 10 };
+	vector<int> coalition2 = { 1, 55, 10 };
 	std::cout << "\r\n      Key recovery" << endl;
-	EC_POINT *secret = keyRecovery(proj, coalition2, q, curve);
+	BigNumber q1("287a1a55f1c28b1c23a27eef69b6a537e5dfd068d43a34951ed645e049d6be0ac805e3c45501be831afe2d40a2395d8c72edb186c6d140bb85ae022a074b");
+	EC_POINT *secret = keyRecovery(proj, coalition2, q1, curve);
 
 	std::cout << "Recovered secret SK: \t";
 	printPoint(secret, curve);
-	*/
+	
 	std::cout << "Check secret MSK * Q: \t";
 	EC_POINT *check = mul(msk, Q, curve);
 	printPoint(check, curve);
 
+	//return 0;
 	std::cout << "\r\n      Create signature" << endl;
 	
 	BigNumber M(200);
@@ -125,7 +171,7 @@ int main(int argc, char ** argv)
 	//cout << "r2: " << r2.toDecString() << endl;
 	EC_POINT *s1;
 	// R = rP
-	s1 = mul(r2, G0, curve);
+	s1 = mul(r2, G, curve);
 
 	//std::cout << "S1: ";
 	//printPoint(s1, curve);
@@ -152,17 +198,7 @@ int main(int argc, char ** argv)
 	return 0;
 	*/
 
-	Integer Ip, Im;
-	Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
-	Im = Integer(2);
-	string strIrred("2 1 1 6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
-	string strA("0 1");
-	string strB("0 0");
-	string strG0_x("1 1971424652593645857677685913504949042673180456464917721388355467732670356866868453718540344482523620218083146279366045128738893020712321933640175997249379 4296897641464992034676854814757495000621938623767876348735377415270791885507945430568382535788680955541452197460367952645174915991662132695572019313583345");
-	string strG0_y("1 5439973223440119070103328012315186243431766339870489830477397472399815594412903491893756952248783128391927052429939035290789135974932506387114453095089572 3254491657578196534138971223937186183707778225921454196686815561535427648524577315556854258504535233566592842007776061702323300678216177012235337721726634");
-	ellipticCurve *ec = new ellipticCurve(Ip, Im, strIrred, strA, strB);
-	//ec->print();
-	ellipticCurveFq E_Fq(ec);
+
 
 	
 	ExtensionField::Element HFq_x, HFq_y, SFq_x, SFq_y, G0_x, G0_y;
@@ -174,7 +210,7 @@ int main(int argc, char ** argv)
 	E_Fq.scalarMultiply(MPK_fq, G0_fq, (Integer)(msk.toDecString()), -1);
 	cout << "\n MPK_fq: " << endl;
 	E_Fq.show(MPK_fq);
-	ecPoint secret_fq = mapToFq(check, curve, E_Fq);
+	ecPoint secret_fq = mapToFq(secret, curve, E_Fq);
 
 	/*
 	BigNumber hash("c8411fd7002be15c6d266bdf516fbd49ef101e0e6454c4fcac0a0736e7ad15aa");
@@ -185,8 +221,8 @@ int main(int argc, char ** argv)
 */
 
 
-	//cout << "\n secret fq: " << endl;
-	//E_Fq.show(secret_fq);
+	cout << "\n secret fq: " << endl;
+	E_Fq.show(secret_fq);
 	BigNumber hash = getRandom(max_hash);
 	cout << "\n hash: " << hash.toDecString() << endl;
 	//string strHx_fq("1 6585938874884161190249790176567180373159829994480512034157897828690094321702398082583836641936540925052205593236857739108779400699876416733619250033001574 1114870903498799919300311051614230487702143776715306484413118861977974710144846490697848621314514171343204111400320074712855582002282753809846905090592511");
@@ -213,15 +249,6 @@ int main(int argc, char ** argv)
 	cout << "\n S2_fq: " << endl;
 	E_Fq.show(S2_fq);
 
-	BigNumber shash = getRandom(q);
-	//string strSx_fq("1 6159497620935257906557343540898005704075905690051056620736859984179681011970149193326830486125500760419791791564998991498449345753926314997987382523405921 3955639758400305255197132500245584107122348438917038996230137507748635098851063891808983517470373013192290448706270855321350612334250594749922405365544392");
-	//string strSy_fq("1 1358517738138214687498297006528551934170768973346051715607110811974480465953218306945989515494073925868991969272612769952234634613804574004024545343325167 617848479534351383674347258603898500438322921182801022785593855537092883000984751823642698365488639632813733693500782440637339604880634710794074753004823");
-	//E_Fq.field->readElement(strSx_fq, SFq_x);
-	//E_Fq.field->readElement(strSy_fq, SFq_y);
-	ecPoint S_fq = hashToPointFq(secret_fq, shash, E_Fq);
-	cout << "\n S_fq: " << endl;
-	E_Fq.show(S_fq);
-
 	//ecPoint G0_fq = mapToFq(G, curve, E_Fq);
 	//ecPoint MPK_fq = mapToFq(MPK, curve, E_Fq);
 	ecPoint S1_fq;
@@ -236,6 +263,15 @@ int main(int argc, char ** argv)
 	ecPoint Q_Fq = mapToFq(Q, curve, E_Fq);
 	ecPoint QQ_Fq;
 	E_Fq.scalarMultiply(QQ_Fq, G0_fq, (Integer)(r.toDecString()), -1);//R=6*P, order of P is not required
+
+	BigNumber shash = getRandom(q);
+	//string strSx_fq("1 6159497620935257906557343540898005704075905690051056620736859984179681011970149193326830486125500760419791791564998991498449345753926314997987382523405921 3955639758400305255197132500245584107122348438917038996230137507748635098851063891808983517470373013192290448706270855321350612334250594749922405365544392");
+	//string strSy_fq("1 1358517738138214687498297006528551934170768973346051715607110811974480465953218306945989515494073925868991969272612769952234634613804574004024545343325167 617848479534351383674347258603898500438322921182801022785593855537092883000984751823642698365488639632813733693500782440637339604880634710794074753004823");
+	//E_Fq.field->readElement(strSx_fq, SFq_x);
+	//E_Fq.field->readElement(strSy_fq, SFq_y);
+	ecPoint S_fq = hashToPointFq(secret_fq, shash, E_Fq);
+	cout << "\n S_fq: " << endl;
+	E_Fq.show(S_fq);
 
 	bool res = verifyTate(S1_fq, S2_fq, hash, MPK_fq, Q_Fq, G0_fq, E_Fq);
 	return 0;
@@ -302,9 +338,9 @@ int main(int argc, char ** argv)
 	//cout << "\n rand: " << endl;
 	//E_Fq.field->writeElement(rand);
 	EC_POINT_free(Q);
-	EC_POINT_free(MPK);
+	//EC_POINT_free(MPK);
 	EC_POINT_free(G);
-	EC_POINT_free(G0);
+	//EC_POINT_free(G0);
 	EC_POINT_free(check);
 	EC_POINT_free(s1);
 	delete(curve);

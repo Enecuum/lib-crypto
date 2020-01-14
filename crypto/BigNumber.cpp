@@ -31,7 +31,7 @@ BigNumber::BigNumber(std::string str) {
 	if ((str.size() % 2) != 0) {
 		str.insert(0, "0");
 	}
-	for (int i = 2; i < str.size(); i += 3) {
+	for (size_t i = 2; i < str.size(); i += 3) {
 		str.insert(i, " ");
 	}
 
@@ -52,7 +52,7 @@ BigNumber::BigNumber(std::string str) {
 
 BigNumber::BigNumber(int number) {
 	std::vector<unsigned char> buf(4);
-	for (int i = 0; i < 4; i++)
+	for (size_t i = 0; i < 4; i++)
 		buf[3 - i] = (number >> (i * 8));
 	if (NULL == (this->bn = BN_bin2bn(buf.data(), buf.size(), NULL))) return;
 	this->dec = number;
