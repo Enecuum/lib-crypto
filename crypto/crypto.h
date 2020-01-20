@@ -15,6 +15,7 @@
 #include "BigNumber.h"
 #include "Curve.h"
 #include "ellipticCurve.h"
+#include "constants.h"
 
 extern "C" EXPORTED BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *crv);
 //extern "C" EXPORTED BigNumber tatePairing();
@@ -25,9 +26,9 @@ extern "C" EXPORTED void printPoint(EC_POINT *P, Curve *crv);
 extern "C" EXPORTED EC_POINT *createMPK(BigNumber msk, EC_POINT *P, Curve *crv);
 extern "C" EXPORTED BigNumber getRandom(BigNumber max);
 EXPORTED std::vector<EC_POINT*> keyProj(std::vector<int> coalition, std::vector<BigNumber> shares, EC_POINT *Q, Curve *crv);
-EXPORTED std::vector<BigNumber> shamir(BigNumber secretM, std::vector<int> ids, int participantN, int sufficientK, BigNumber q);
-extern "C" EXPORTED EC_POINT* keyRecovery(std::vector<EC_POINT*> proj, std::vector<int> coalition, BigNumber q, Curve *crv);
-EXPORTED std::vector<int> generatePoly(int power);
+EXPORTED std::vector<BigNumber> shamir(BigNumber secretM, std::vector<BigNumber> ids, int participantN, int sufficientK, BigNumber q);
+extern "C" EXPORTED EC_POINT* keyRecovery(std::vector<EC_POINT*> proj, std::vector<BigNumber> coalition, BigNumber q, Curve *crv);
+EXPORTED std::vector<BigNumber> generatePoly(int power);
 extern "C" EXPORTED BigNumber operator * (const BigNumber &a, const BigNumber &b);
 extern "C" EXPORTED BigNumber operator % (const BigNumber &a, const BigNumber &b);
 //extern "C" CRYPTOLIBRARY_API BigNumber operator / (const BigNumber &a, const BigNumber &b);
@@ -40,8 +41,10 @@ EXPORTED ExtensionField::Element tatePairing(ecPoint &P, ecPoint &Q, ecPoint &S,
 EXPORTED ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq);
 EXPORTED ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq& E_Fq);
 EXPORTED ellipticCurveFq::Point hashToPoint(BigNumber num);
+std::string dectox_int(Integer num);
+EXPORTED EC_POINT* getQ(BigNumber qhash, Curve* crv, ellipticCurveFq& E_Fq);
 bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq, ecPoint& Q_fq, ecPoint& G0_fq, ellipticCurveFq& E_Fq);
-void verify_mobile(std::string p, std::string a, std::string b, std::string order, std::string irred,
+bool verify_mobile(std::string p, std::string a, std::string b, std::string order, std::string irred,
 	std::string gx, std::string gy, int k, std::string s1x, std::string s1y, std::string s2x,
 	std::string s2y, std::string pk_lpos, std::string mhash, std::string mpkx,
-	std::string mpky, std::string strEta);
+	std::string mpky);

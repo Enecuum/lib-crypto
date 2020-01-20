@@ -39,10 +39,11 @@ Napi::Value NodePT::GetCoords(const Napi::CallbackInfo& info) {
     NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[0].As<Napi::Object>());
     if (!EC_POINT_get_affine_coordinates_GFp(curve->crv.curve, this->p, x.bn, y.bn, NULL))
         Napi::Error::New(env, "EC_POINT_new error").ThrowAsJavaScriptException();
-    std::string strx = x.toDecString();
-    std::string stry = y.toDecString();
-    std::string str = "(" + strx + " " + stry + ")";
-    return Napi::String::New(info.Env(), str);
+
+    Napi::Object obj = Napi::Object::New(env);
+    obj.Set(Napi::String::New(env, "_x"), x.toHexString());
+    obj.Set(Napi::String::New(env, "_y"), y.toHexString());
+    return obj;
 }
 
 Napi::Value NodePT::SetCoords(const Napi::CallbackInfo& info) {

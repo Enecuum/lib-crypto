@@ -48,7 +48,7 @@ var addon = require('./addon');
 	//let ids = [1, 55, 10]
 	let ids = [];
 	for(let i = 0; i < 100; i++)
-		ids[i] = i + 1;
+		ids[i] = addon.BigNumber(i + 1);
 	let shares = addon.shamir(msk, ids, 100, 3, q);
 	// console.log("Key shares: ");
 	// for (let i = 0; i < shares.length; i++){
@@ -89,7 +89,7 @@ var addon = require('./addon');
 //
 // ------------------ LPoS (someone from PoS_1 - 3, lets be PoS_3 )
 //
-	let coalition = [ posId_1, posId_2, posId_3 ];
+	let coalition = [ addon.BigNumber(posId_1), addon.BigNumber(posId_2), addon.BigNumber(posId_3) ];
 	let proj = [ss1, ss2, ss3]; // Collected from other PoSes
 	
 	//console.log("Key shadows");

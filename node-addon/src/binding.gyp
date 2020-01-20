@@ -29,7 +29,7 @@
       "sources": [  "addon.cc", "node-bignumber.cc", "node-point.cc" , "node-curve.cc"  ],
       "libraries": [
         "C:/cygwin64/home/Anton/ecc/examples/crypto/x64/Debug/crypto.lib",
-        "C:/cygwin64/home/Anton/ecc/givaro-3.8.0/src/.libs/libgivaro.a",
+        "../libgivaro.lib",
         "C:/cygwin64/tmp/win-gmp/lib/libgmpxx.a",
         "C:/cygwin64/tmp/win-gmp/lib/libgmp.a"        
       ],

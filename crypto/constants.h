@@ -1,0 +1,1 @@
+#define MAX_NUMBER_256 "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"

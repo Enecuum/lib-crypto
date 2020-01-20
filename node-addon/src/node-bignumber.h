@@ -13,6 +13,7 @@ class NodeBN : public Napi::ObjectWrap<NodeBN> {
 		static Napi::FunctionReference constructor;
 		Napi::Value GetValue(const Napi::CallbackInfo& info);
 		Napi::Value GetDecString(const Napi::CallbackInfo& info);
+		Napi::Value GetHexString(const Napi::CallbackInfo& info);
 		void setVal(BigNumber a);
 };
 

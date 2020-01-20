@@ -224,7 +224,6 @@ Napi::Object AddPoints(const Napi::CallbackInfo& info) {
 }
 
 Napi::Object Mul(const Napi::CallbackInfo& info) {
-	//Napi::Env env = info.Env();
 	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[1].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
@@ -234,7 +233,6 @@ Napi::Object Mul(const Napi::CallbackInfo& info) {
 }
 
 Napi::Object HashToPoint(const Napi::CallbackInfo& info) {
-	//Napi::Env env = info.Env();
 	NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[1].As<Napi::Object>());
 
@@ -264,13 +262,13 @@ Napi::Array Shamir(const Napi::CallbackInfo& info) {
 	int n = info[2].As<Napi::Number>().Int32Value();
 	int k = info[3].As<Napi::Number>().Int32Value();
 	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
-	
-	std::vector<int> ids;
+
+	std::vector<BigNumber> ids;
 	for(size_t i  = 0; i < nids.Length(); i++){
-		ids.push_back(nids.Get(i).As<Napi::Number>().Int32Value());
+		NodeBN* tmp = Napi::ObjectWrap<NodeBN>::Unwrap(nids.Get(i).As<Napi::Object>());
+		ids.push_back(tmp->bn);
 	}
 	std::vector<BigNumber> shares = shamir(secret->bn, ids, n, k, q->bn);
-
 	Napi::Array res = Napi::Array::New(env, shares.size());
 	for(size_t i  = 0; i < shares.size(); i++){
 		res.Set(i, NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &shares[i])));
@@ -279,8 +277,6 @@ Napi::Array Shamir(const Napi::CallbackInfo& info) {
 }
 
 Napi::Array KeyProj(const Napi::CallbackInfo& info) {
-	Napi::Env env = info.Env();
-
 	Napi::Array ncoal = info[0].As<Napi::Array>();
 	Napi::Array nshares = info[1].As<Napi::Array>();
 	NodePT* P = Napi::ObjectWrap<NodePT>::Unwrap(info[2].As<Napi::Object>());
@@ -298,7 +294,7 @@ Napi::Array KeyProj(const Napi::CallbackInfo& info) {
 
 	std::vector<EC_POINT*> proj = keyProj(coalition, shares, P->p, &curve->crv);
 	
-	Napi::Array res = Napi::Array::New(env, proj.size());
+	Napi::Array res = Napi::Array::New(info.Env(), proj.size());
 	for(size_t i  = 0; i < proj.size(); i++){
 		EC_POINT* buf = proj[i];
 		res.Set(i, NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &buf)));
@@ -308,16 +304,15 @@ Napi::Array KeyProj(const Napi::CallbackInfo& info) {
 
 //keyRecovery(proj, coalition, q, curve);
 Napi::Object KeyRecovery(const Napi::CallbackInfo& info) {
-	//Napi::Env env = info.Env();
-
 	Napi::Array nproj = info[0].As<Napi::Array>();
 	Napi::Array ncoal = info[1].As<Napi::Array>();
 	NodeBN* q = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[3].As<Napi::Object>());
 	
-	std::vector<int> coalition;
+	std::vector<BigNumber> coalition;
 	for(size_t i  = 0; i < ncoal.Length(); i++){
-		coalition.push_back(ncoal.Get(i).As<Napi::Number>().Int32Value());
+		NodeBN* tmp = Napi::ObjectWrap<NodeBN>::Unwrap(ncoal.Get(i).As<Napi::Object>());
+		coalition.push_back(tmp->bn);
 	}
 	std::vector<EC_POINT*> proj;
 	for(size_t i  = 0; i < nproj.Length(); i++){
@@ -337,21 +332,6 @@ Napi::Object WeilPairing(const Napi::CallbackInfo& info) {
 	
 	BigNumber res = weilPairing(P->p, Q->p, S->p, &curve->crv);
   	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
-}
-
-std::string dectox_int(Integer num)
-{
-	std::stringstream ss;
-	std::vector<size_t> tmp;
-	while(num != 0)
-	{
-		Integer rest = num % 16;
-		num /= 16;
-		tmp.push_back(rest);
-	}
-	for (size_t i = 0; i < tmp.size(); i++)
-		ss << std::hex << tmp[tmp.size() - 1 - i];
-	return std::string(ss.str());
 }
 
 Napi::Number VerifyTate(const Napi::CallbackInfo& info) {
@@ -378,15 +358,14 @@ Napi::Number VerifyTate(const Napi::CallbackInfo& info) {
 	ecurve->E_Fq->field->readElement(MPKy.Utf8Value(), MPK_y);
 	ecPoint MPK_fq(MPK_x, MPK_y);
 	
-	Napi::Object s2 = sign.Get("s").As<Napi::Object>();
 	Napi::Object s1 = sign.Get("r").As<Napi::Object>();
-
 	Napi::Array s1x = s1.Get("x").As<Napi::Array>();
 	Napi::Array s1y = s1.Get("y").As<Napi::Array>();
 	ExtensionField::Element S1Fq_x = arrToPoly(s1x, *ecurve->E_Fq);
 	ExtensionField::Element S1Fq_y = arrToPoly(s1y, *ecurve->E_Fq);
 	ecPoint S1_fq(S1Fq_x, S1Fq_y);
 
+	Napi::Object s2 = sign.Get("s").As<Napi::Object>();
 	Napi::Array s2x = s2.Get("x").As<Napi::Array>();
 	Napi::Array s2y = s2.Get("y").As<Napi::Array>();
 	ExtensionField::Element S2Fq_x = arrToPoly(s2x, *ecurve->E_Fq);
@@ -395,49 +374,11 @@ Napi::Number VerifyTate(const Napi::CallbackInfo& info) {
 
 
 	BigNumber seed = getRandom(curve->crv.order);
-	//std::cout << "seed: " << seed.toDecString() << std::endl;
 	ecPoint S_fq = hashToPointFq(S2_fq, seed, *ecurve->E_Fq);
 
-	//ecPoint G0_fq = mapToFq(G0->p, &curve->crv, *ecurve->E_Fq);
-
-	//ecPoint MPK_fq = mapToFq(MPK->p, &curve->crv, *ecurve->E_Fq);
 	ecPoint Q_Fq = mapToFq(Q->p, &curve->crv, *ecurve->E_Fq);
 
-	ecPoint H_fq = hashToPoint(h->bn);
-	//ecPoint H_fq = mapToFq(H->p, &curve->crv, *ecurve->E_Fq);
-	//ecPoint S1_fq = mapToFq(s1->p, &curve->crv, *ecurve->E_Fq);
-
-	ExtensionField::Element rr, bb, cc;
-
-	rr = tatePairing(S2_fq, G0_fq, S_fq, *ecurve->E_Fq);
-	bb = tatePairing(Q_Fq, MPK_fq, S_fq, *ecurve->E_Fq);
-	cc = tatePairing(H_fq, S1_fq, S_fq, *ecurve->E_Fq);
-	std::string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
-
-	ExtensionField::Element r1, b1, c1;
-	ecurve->E_Fq->field->pow(r1, rr, strEta);
-	ecurve->E_Fq->field->pow(b1, bb, strEta);
-	ecurve->E_Fq->field->pow(c1, cc, strEta);
-
-	ExtensionField::Element b1c1;
-	ecurve->E_Fq->field->mul(b1c1, b1, c1);
-	
-	//std::cout << "\n S_fq: " << std::endl;
-	//ecurve->E_Fq->show(S_fq);
-	//std::cout << "\n H_fq: " << std::endl;
-	//ecurve->E_Fq->show(H_fq);
-
-	//std::cout << "\n r1: " << std::endl;
-	//ecurve->E_Fq->field->writeElement(r1);
-	//std::cout << "\n b1: " << std::endl;
-	//ecurve->E_Fq->field->writeElement(b1);
-	//std::cout << "\n c1: " << std::endl;
-	//ecurve->E_Fq->field->writeElement(c1);
-
-	//std::cout << "\n b1c1: " << std::endl;
-	//ecurve->E_Fq->field->writeElement(b1c1);
-
-	bool res = ecurve->E_Fq->field->areEqual(r1, b1c1);
+	bool res = verifyTate(S1_fq, S2_fq, h->bn, MPK_fq, Q_Fq, G0_fq, *ecurve->E_Fq);
   	return Napi::Number::New(info.Env(), res);
 }
 
@@ -445,32 +386,9 @@ Napi::Object GetQ(const Napi::CallbackInfo& info) {
 	NodeBN* nhash = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[1].As<Napi::Object>());
 	NCurve_Fq* ecurve = Napi::ObjectWrap<NCurve_Fq>::Unwrap(info[2].As<Napi::Object>());
-	BigNumber orderQ("3298c");
 	BigNumber qhash(nhash->bn);
-	ecPoint tmpQ;// = hashToPoint(max_hash);
-	ecPoint tmp;
-	ecPoint zero;
-	int isZero = 1;
-	ecurve->E_Fq->scalarMultiply(zero, tmpQ, (Integer)(0), -1);
 
-	do {
-		tmpQ = hashToPoint(qhash);
-		ecurve->E_Fq->scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
-		isZero = (tmp == zero);
-		qhash = qhash + BigNumber(1);
-	} while (isZero);
-	ecurve->E_Fq->scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
-
-	BigNumber qx(dectox_int(tmp.x[0]));
-	BigNumber qy(dectox_int(tmp.y[0]));
-
-	EC_POINT *Q;
-	if (NULL == (Q = EC_POINT_new(curve->crv.curve)))
-		Napi::Error::New(info.Env(), "EC_POINT_new error").ThrowAsJavaScriptException();
-
-	//EC_POINT *Q = EC_POINT_new(curve->crv.curve);
-	if (1 != EC_POINT_set_affine_coordinates_GFp(curve->crv.curve, Q, qx.bn, qy.bn, NULL)) 
-		Napi::Error::New(info.Env(), "EC_POINT_set_affine_coordinates_GFp error").ThrowAsJavaScriptException();
+	EC_POINT *Q = getQ(qhash, &curve->crv, *ecurve->E_Fq);
 	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &Q));
 }
 

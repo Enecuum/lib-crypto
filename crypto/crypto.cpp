@@ -78,7 +78,7 @@ BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
 	return BigNumber(r);
 }
 
-EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, Curve *curve) {
+EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<BigNumber> coalition, BigNumber q, Curve *curve) {
 	EC_POINT *secret = EC_POINT_new(curve->curve);
 	EC_POINT *buff = EC_POINT_new(curve->curve);
 	for (size_t i = 0; i < proj.size(); i++) {
@@ -86,8 +86,8 @@ EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q
 		for (size_t j = 0; j < proj.size(); j++) {
 			if (i != j) {
 				//lamb = (lamb * (0-coalition[j]))/(coalition[i]-coalition[j]) % q
-				BigNumber nom = msub(BigNumber(0), BigNumber(coalition[j]), q);
-				BigNumber den = msub(BigNumber(coalition[i]), BigNumber(coalition[j]), q);
+				BigNumber nom = msub(BigNumber(0), coalition[j], q);
+				BigNumber den = msub(coalition[i], coalition[j], q);
 				lambda = (lambda * (mdiv(nom, den, q))) % q;
 				//lambda = l % q;//BigNumber(0 - coalition[j]) / BigNumber(coalition[i] - coalition[j])) % q;
 				//cout << lambda.dec << endl;
@@ -113,16 +113,20 @@ EC_POINT* hashToPoint(BigNumber hash, Curve *curve) {
 	return ret;
 }
 
-vector<int> generatePoly(int power) {
-	//srand(time(0));
+vector<BigNumber> generatePoly(int power) {
+	srand(time(0));
+	
 	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
 	// Poly: 1077x + 5x^2 + 6x^3 + 8x^4 + x^5
 	// {1, 8, 6, 5, 1077}
-	vector<int> arrayA = { 5, 1077 };
+	vector<BigNumber> arrayA;
+	for (int i = 0; i < power; i++)
+		arrayA.push_back(getRandom(BigNumber(MAX_NUMBER_256)));
+	// = { 5, 1077 };
 	return arrayA;
 }
 
-vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, int sufficientK, BigNumber q)
+vector<BigNumber> shamir(BigNumber secretM, vector<BigNumber> ids, int participantN, int sufficientK, BigNumber q)
 {
 	
 	//secretM = 10;
@@ -131,14 +135,14 @@ vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, i
 
 	size_t power = sufficientK - 1;
 
-	vector<int> arrayA = generatePoly(power);
+	vector<BigNumber> arrayA = generatePoly(power);
 
 	vector<BigNumber> arrayK;
 	for (size_t i = 0; i < ids.size(); i++)
 	{
 		BigNumber temp(0);
 		for (size_t j = 0; j < power; j++)
-			temp = temp + (BigNumber(arrayA[j]) * (bpow(BigNumber(ids[i]), power - j)));
+			temp = temp + (arrayA[j] * (bpow(ids[i], power - j)));
 		arrayK.insert(arrayK.end(), (temp + secretM) % q);
 	}
 	return arrayK;
@@ -479,7 +483,7 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 
 	Integer a1(x2[1]);
 	Integer b1(x2[0]);
-	Integer Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
+	Integer Ip("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	Integer f0("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
 
 	//std::cout << std::endl << "a1 " << a1 << std::endl;
@@ -549,7 +553,7 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	return res;
 }
 
-void verify_mobile(
+bool verify_mobile(
 	std::string p,
 	std::string a,
 	std::string b,
@@ -565,8 +569,7 @@ void verify_mobile(
 	std::string pk_lpos,
 	std::string mhash,
 	std::string mpkx,
-	std::string mpky,
-	std::string strEta
+	std::string mpky
 	) {
 	// H = id_hash * G
 	// Q = pk_lpos * G
@@ -582,22 +585,20 @@ void verify_mobile(
 	
 	// G point
 	ExtensionField::Element G_x, G_y;
-	gx.insert(0, "0 ");
-	gy.insert(0, "0 ");
 	E_Fq.field->readElement(gx, G_x);
 	E_Fq.field->readElement(gy, G_y);
 	ecPoint G0_fq(G_x, G_y);
 	cout << "\n G0_fq: " << endl;
 	E_Fq.show(G0_fq);
+
 	// s1 point
 	ExtensionField::Element S1_x, S1_y;
-	s1x.insert(0, "0 ");
-	s1y.insert(0, "0 ");
 	E_Fq.field->readElement(s1x, S1_x);
 	E_Fq.field->readElement(s1y, S1_y);
 	ecPoint S1_fq(S1_x, S1_y);
 	cout << "\n S1_fq: " << endl;
 	E_Fq.show(S1_fq);
+
 	// s2 point
 	ExtensionField::Element S2_x, S2_y;
 	E_Fq.field->readElement(s2x, S2_x);
@@ -605,91 +606,57 @@ void verify_mobile(
 	ecPoint S2_fq(S2_x, S2_y);
 	cout << "\n S2_fq: " << endl;
 	E_Fq.show(S2_fq);
+
 	// MPK point
 	ExtensionField::Element MPK_x, MPK_y;
-	mpkx.insert(0, "0 ");
-	mpky.insert(0, "0 ");
 	E_Fq.field->readElement(mpkx, MPK_x);
 	E_Fq.field->readElement(mpky, MPK_y);
 	ecPoint MPK_fq(MPK_x, MPK_y);
 	cout << "\n MPK_fq: " << endl;
 	E_Fq.show(MPK_fq);
 
-	string strHx_fq("11 12795200616325864128301600439533238625836570855973778800724207558943117513205 12130884351496920759643149235993696557935956626275118316469563330330421956954 6283040097693372918304058385692122958293949981328347340387761786450421554751 4899237897159181067640145765574944595870830883586148580522329018622189949897 8846355464997914784016362869867541795213329883451326397888469916812886128424 14129079141784273041581234757445313819197902405344241350499624439513305758998 13352072847043331449752665150855039962671167605050063905273191449284813579560 6393127232507087088463231637082626347554201215151264493277478426389978548816 11055793717890002963273053758670586391406977509500385190412071151130460455343 6377301085569399016620998198775940872073165203580132449119152990662002772535 11447275512728877891081113656170964162742321407569066846904189083117611540998 5937852374468625217547352015728789862599812933954999569332681032009432549840");
-	string strHy_fq("11 3218839677179312609018856855655013274124364702869282379100183166286769237998 15044457283554428446408480119819863018909478296385264354499712915354078803313 10836697868833735308741152896657122315989750961978455786725014823625823018718 6252900733548808857614294347803602330676526195807488170093773710720709936698 9072164750976273151044609579754931421152548695706084093022299941929293303770 1581051531791168413564622242556945736630412913604996002010381621887765731409 3095295538339275550800957843390877304418396432741414862000545449582323768268 11825058412863805355749018175020855939988339734006085226357534946021033274444 664800404171033514083577273183587063464881026711383308491155722761791501750 11913374880181628896317996635569558849448830303277386417285222453712730872323 11428928723220629553432075124518828787664163337109018680143588209208797492122 1104801707771267947748586133547196191205177949442762583878743413246435741153");
-	E_Fq.field->readElement(strHx_fq, HFq_x);
-	E_Fq.field->readElement(strHy_fq, HFq_y);
-	ecPoint H_fq(HFq_x, HFq_y);
-	//cout << "\n H_fq: " << endl;
-	//E_Fq.show(H_fq);
-
-	string strSx_fq("11 7463519085493365693394121199190059745988511279031308831763630965575497714973 3213479576728694612873129502574939146123496605844840557128765993775758126890 13752713972998144419152467731240251127964542833056708196491325125872366091087 15553372254183114510739439757246731793806383848608048309939148850948110186888 12258644319749650037144571587825036927155675497479416759205860608047734134062 3532101921007362030794325086925105560686780697780826036915262551502427550164 4355439161355160537858443362077205542687166906735462310058911937938440403416 3802272190851511210630147460266578785161879155516601953628860280715370308621 1317637193017543797636378441570532755116450388205874274160281092658933403629 5473798230129279492859744018818548971274864114987064021826091310815335879733 8851270884955316309046441361625390056442140408234485954600071180679479553237 15132257993022606200919632833688451974231808385319226086684277348612204805425");
-	string strSy_fq("11 5402906328658268916194312952865326995905954868409589434741588571597549983634 391870371242143485522013522668372963939928916979327764650555183010158927409 8388867712234558980469512863505598308802851258476952237041272427075151744109 7495609234823091861100624264137916927683614152015976278448757663646649941991 5658906808188150074100165944955289756224642167129582121658117411584296860873 13878886333438371495866267885612108469039825873739305210045820592485652966585 6963650853987273077816544478754914531960456246032726948867288748211675615415 8830885856243348641350531158188320567660408310040255566312664501804444943080 6106755154037675810581056224691089803765559530574180661442422341382742080274 5485664565367343310789520189176634801281297522570962649298265524017950485938 9805891012360959361564020302204274589333018098732386052032042786398105438146 15198026600655527523115482280007159805633263781115846119482141707705953976273");
-	E_Fq.field->readElement(strSx_fq, SFq_x);
-	E_Fq.field->readElement(strSy_fq, SFq_y);
-	ecPoint S_fq(SFq_x, SFq_y);
-	//cout << "\n S_fq: " << endl;
-	//E_Fq.show(S_fq);
-
-
-	//cout << "\n G0_fq: " << endl;
-	//E_Fq.show(G0_fq);
-
+	ecPoint tmpQ;
 	ecPoint Q_Fq;
-	E_Fq.scalarMultiply(Q_Fq, G0_fq, (Integer)(pk_lpos.data()), -1);
+	BigNumber orderQ("3298c");
+	BigNumber qhash(pk_lpos);
+	tmpQ = hashToPoint(qhash);
+	E_Fq.scalarMultiply(Q_Fq, tmpQ, (Integer)(orderQ.toDecString()), -1);
 
-	//std::stringstream ss;
-	//E_Fq.field->writeElement(r1, ss);
+	cout << "\n Q_Fq: " << endl;
+	E_Fq.show(Q_Fq);
+	bool res = verifyTate(S1_fq, S2_fq, mhash, MPK_fq, Q_Fq, G0_fq, E_Fq);
+	return res;
+}
 
-	//cout << ss.str() << endl;
-	//vector<string> elements;
-	//string temp;
-	//while (!ss.eof()) {
-	//	ss >> temp;
-	//	if (temp == "+")
-	//		continue;
-	//	std::size_t start = temp.find("(");
-	//	std::size_t end = temp.find(")");
-	//	std::string str3 = temp.substr(start + 1, end - 1);
-	//	elements.push_back(str3);
-	//	//cout << str3 << endl;
-	//	temp = "";
-	//}
+EC_POINT* getQ(BigNumber qhash, Curve* crv, ellipticCurveFq& E_Fq) {
 
-	ExtensionField::Element rr = tatePairing(G0_fq, S2_fq, S_fq, E_Fq);
-	ExtensionField::Element bb = tatePairing(MPK_fq, Q_Fq, S_fq, E_Fq);
-	ExtensionField::Element cc = tatePairing(S1_fq, H_fq, S_fq, E_Fq);
+	BigNumber orderQ("3298c");
+	ecPoint tmpQ;// = hashToPoint(max_hash);
+	ecPoint tmp;
+	ecPoint zero;
+	int isZero = 1;
+	E_Fq.scalarMultiply(zero, tmpQ, (Integer)(0), -1);
 
-	// TODO: cacl instead of hard-code
-	
-	/*
-	  eta = (p^k - 1)/q
-	  tate pairing return value should be in `eta` degree
-	  num = eval_miller(P, Q+S)/eval_miller(P,  S)
-	  return (num^eta)
-	*/
-	ExtensionField::Element r1, b1, c1, b1c1;
-	E_Fq.field->pow(r1, rr, strEta);
-	E_Fq.field->pow(b1, bb, strEta);
-	E_Fq.field->pow(c1, cc, strEta);
+	do {
+		tmpQ = hashToPoint(qhash);
+		E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
+		isZero = (tmp == zero);
+		qhash = qhash + BigNumber(1);
+	} while (isZero);
+	E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
 
-	ExtensionField::Element bbcc;
-	E_Fq.field->mul(b1c1, b1, c1);
+	BigNumber qx(dectox_int(tmp.x[0]));
+	BigNumber qy(dectox_int(tmp.y[0]));
 
-	//E_Fq.field->pow(b1c1, bbcc, strEta);
-	cout << "\n r1: " << endl;
-	E_Fq.field->writeElement(r1);
-	//cout << "\n b1: " << endl;
-	//E_Fq.field->writeElement(b1);
-	//cout << "\n c1: " << endl;
-	//E_Fq.field->writeElement(c1);
-	cout << "\n b1c1: " << endl;
-	E_Fq.field->writeElement(b1c1);
+	EC_POINT* Q;
+	if (NULL == (Q = EC_POINT_new(crv->curve))) handleErrors();
+	if (1 != EC_POINT_set_affine_coordinates_GFp(crv->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	return Q;
 }
 
 ellipticCurveFq::Point hashToPoint(BigNumber num) {
 	// x = a ^ ((p + 1) / 4)
-	Integer Ip = Integer("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
+	Integer Ip("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	BigNumber eta("20000000000000000000000000000000000080005000000000000000000000000000000000004000200000008000000000000000000000000000000000020001");
 	ExtensionField Fp(Ip, (Integer)1);
 	ExtensionField::Element res, num_fp, den_fp;
@@ -730,9 +697,9 @@ ellipticCurveFq::Point hashToPoint(BigNumber num) {
 }
 
 bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq, ecPoint& Q_fq, ecPoint& G0_fq, ellipticCurveFq& E_Fq) {
-	BigNumber max_hash("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+	BigNumber max_hash(MAX_NUMBER_256);
 	//BigNumber hash = getRandom(max_hash);
-	cout << "\n hash: " << hash.toDecString() << endl;
+	//cout << "\n hash: " << hash.toDecString() << endl;
 
 	ecPoint H_fq = hashToPoint(hash);//hashToPointFq(secret_fq, hash, E_Fq);
 
@@ -746,7 +713,6 @@ bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq,
 	//return 0;
 	// TODO: cacl instead of hard-code
 	string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
-	BigNumber bnEta("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080002");
 
 	/*
 	  eta = (p^k - 1)/q
@@ -764,14 +730,29 @@ bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq,
 
 	bool areEqual = E_Fq.field->areEqual(r1, b1c1);
 	//E_Fq.field->pow(b1c1, bbcc, strEta);
-	cout << "\n r1: " << endl;
-	E_Fq.field->writeElement(r1);
-	cout << "\n b1: " << endl;
-	E_Fq.field->writeElement(b1);
-	cout << "\n c1: " << endl;
-	E_Fq.field->writeElement(c1);
-	cout << "\n b1c1: " << endl;
-	E_Fq.field->writeElement(b1c1);
-	cout << "\n Verified: " << areEqual << endl;
+	//cout << "\n r1: " << endl;
+	//E_Fq.field->writeElement(r1);
+	//cout << "\n b1: " << endl;
+	//E_Fq.field->writeElement(b1);
+	//cout << "\n c1: " << endl;
+	//E_Fq.field->writeElement(c1);
+	//cout << "\n b1c1: " << endl;
+	//E_Fq.field->writeElement(b1c1);
+	//cout << "\n Verified: " << areEqual << endl;
 	return areEqual;
+}
+
+std::string dectox_int(Integer num)
+{
+	std::stringstream ss;
+	std::vector<int> tmp;
+	while (num != 0)
+	{
+		Integer rest = num % 16;
+		num /= 16;
+		tmp.push_back(rest);
+	}
+	for (int i = (tmp.size() - 1); i >= 0; i--)
+		ss << std::hex << tmp[i];
+	return std::string(ss.str());
 }
