@@ -1,5 +1,5 @@
-//let addon = require('./Build/Release/addon');
-let addon = require('./node_modules/enecuum-crypto/addon');
+let addon = require('./src/Build/Release/addon');
+//let addon = require('C:/KOROBKOV/project/lib-crypto-master/ecc\node-addon\src\build\Release\addon');
 var crypto = require('crypto');
 
 module.exports = addon;
@@ -81,27 +81,27 @@ module.exports.keySharing = function (coalition, ids, Q, msk, curve){
 }
 
 module.exports.sign = function (M, leadID, G, G0, secret, curve){
-	var r2 = addon.BigNumber(7);//addon.getRandom(q);
-	//console.log("r2: " + r2.value());
+  var r2 = addon.BigNumber(7);//addon.getRandom(q);
+  //console.log("r2: " + r2.value());
 
-	var s1 = addon.mul(r2, G0, curve);
+  var s1 = addon.mul(r2, G0, curve);
 
-	var H = hash(getHash(M.toString() + leadID.toString()), G, curve);
+  var H = hash(getHash(M.toString() + leadID.toString()), G, curve);
 
-	// S2 = r*H + SecKey
-	// S = sQ + rH
-	var s2 = addon.mul(r2, H, curve);
-	s2 = addon.addPoints(s2, secret, curve);
-	return {
-		s1 : {
-			p : s1,
-			x : s1.x(curve),
-			y : s1.y(curve)
-		},
-		s2 : {
-			p : s2,
-			x : s2.x(curve),
-			y : s2.y(curve)
-		}
-	};
+  // S2 = r*H + SecKey
+  // S = sQ + rH
+  var s2 = addon.mul(r2, H, curve);
+  s2 = addon.addPoints(s2, secret, curve);
+  return {
+    r : {
+      p : s1,
+      x : s1.x(curve),
+      y : s1.y(curve)
+    },
+    s : {
+      p : s2,
+      x : s2.x(curve),
+      y : s2.y(curve)
+    }
+  };
 }

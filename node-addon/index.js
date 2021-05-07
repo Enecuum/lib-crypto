@@ -26,8 +26,8 @@ console.log(test.value());
 	let LPoSID = 677321
 	var PK_LPoS = addon.getHash(kblock.id.toString() + LPoSID.toString());
 	console.log("PK_LPoS: " + PK_LPoS);
-
-console.log("Creating curve");
+console.log(a.value());
+console.log("Creating 1111 curve");
  	var curve = new addon.NCurve(a, b, p, order, g0x, g0y);
 
 	var G0 = addon.Point(g0x, g0y, curve);
@@ -66,8 +66,8 @@ console.log("Creating curve");
 
 	let sign = addon.sign(data, LPoSID, G, G0, secret, curve);
 
-	console.log("S1: " + sign.s1.xy(curve));
-	console.log("S2: " + sign.s2.xy(curve));
+    console.log("S1: " + sign.r.p.xy(curve));
+    console.log("S2: " + sign.s.p.xy(curve));
 
 	console.log("-------- Verification");
 	console.log("Weil pairing");

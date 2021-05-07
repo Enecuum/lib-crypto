@@ -6,15 +6,8 @@
 NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
-    NodeBN* a = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
-    NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
-    NodeBN* p = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
-    NodeBN* order = Napi::ObjectWrap<NodeBN>::Unwrap(info[3].As<Napi::Object>());
-    NodeBN* gx = Napi::ObjectWrap<NodeBN>::Unwrap(info[4].As<Napi::Object>());
-    NodeBN* gy = Napi::ObjectWrap<NodeBN>::Unwrap(info[5].As<Napi::Object>());
-    
-    Curve curve(a->bn, b->bn, p->bn, order->bn, gx->bn, gy->bn);
-    this->crv = curve;
+    //Curve *curve = info[0].As<Napi::External<Curve>>().Data();
+    this->crv = info[0].As<Napi::External<Curve>>().Data();
     
     // try{
     //     //int i = test(1, 2);
@@ -29,16 +22,23 @@ NCurve::NCurve(const Napi::CallbackInfo& info) : Napi::ObjectWrap<NCurve>(info) 
 
 Napi::FunctionReference NCurve::constructor;
 
-void NCurve::Init(Napi::Env env, Napi::Object exports) {
-    Napi::HandleScope scope(env);
+Napi::Object NCurve::Init(Napi::Env env, Napi::Object exports) {
+    //Napi::HandleScope scope(env);
 
     Napi::Function func = DefineClass(env, "NCurve", {});
-    constructor = Napi::Persistent(func);
-    constructor.SuppressDestruct();
+
+    Napi::FunctionReference* constructor = new Napi::FunctionReference();
+    *constructor = Napi::Persistent(func);
     exports.Set("NCurve", func);
+    env.SetInstanceData(constructor);
+    return exports;
 }
 
-Napi::Object NCurve::NewInstance(Napi::Value arg) {
-    Napi::Object obj = constructor.New({ arg });
+Napi::Object NCurve::NewInstance(Napi::Env env, Napi::Value arg) {
+    std::cout << "NCurve::NewInstance: \t" << std::endl;
+    Napi::Object obj = env.GetInstanceData<Napi::FunctionReference>()->New({ arg });
     return obj;
+
+    //Napi::Object obj = constructor.New({ arg });
+    //return obj;
 }

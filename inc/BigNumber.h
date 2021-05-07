@@ -19,10 +19,15 @@ public:
 	BigNumber(const BigNumber& bn);
 	BigNumber(BIGNUM * x);
 	BigNumber(unsigned char * x, int size);
+	BigNumber(std::string str);
 	BigNumber(int x);
 	~BigNumber();
 	int decimal();
 	char* toDecString();
+	std::string toHexString();
 	BIGNUM* bn;
-	long dec;
+
+	BigNumber& operator+=(const BigNumber& b);
+	BigNumber& operator*=(const BigNumber& b);
+	BigNumber& operator=(const BigNumber& bn);
 };
