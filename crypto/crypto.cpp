@@ -3,30 +3,56 @@
 #include <bitset>
 #include "crypto.h"
 using namespace std;
-BN_CTX *ctx = BN_CTX_new();
+
 
 BigNumber operator + (const BigNumber &a, const BigNumber &b)
 {
+//IK modified
 	BIGNUM *r = BN_new();
-	if (!BN_add(r, a.bn, b.bn))
-		return nullptr;
-	return BigNumber(r);
+	if (!BN_add(r, a.bn, b.bn)) {
+		BN_free(r);
+		return BigNumber();
+	}	
+	BigNumber res(r);
+	BN_free(r);
+	return res;
 }
+
 BigNumber operator - (const BigNumber &a, const BigNumber &b)
 {
+//IK modified
 	BIGNUM *r = BN_new();
-	if (!BN_mod_sub(r, a.bn, b.bn, BigNumber(1223).bn, ctx))
-		return nullptr;
-	return BigNumber(r);
+    BN_CTX* ctx = BN_CTX_new();
+
+	if (!BN_mod_sub(r, a.bn, b.bn, BigNumber(1223).bn, ctx)) {
+		BN_CTX_free(ctx);
+		BN_free(r);
+		return BigNumber();
+	}	
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
+
 BigNumber operator * (const BigNumber &a, const BigNumber &b)
 {
+//IK modified
 	BIGNUM *r = BN_new();
-	if (BN_mul(r, a.bn, b.bn, ctx)) {
-		return BigNumber(r);
+	BN_CTX* ctx = BN_CTX_new();
+
+	if (BN_mul(r, a.bn, b.bn, ctx)) {		
+		BigNumber res(r);
+		BN_free(r);
+		BN_CTX_free(ctx);
+		return res;
 	}
-	return nullptr;
+
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return BigNumber();
 }
+
 //BigNumber operator / (const BigNumber &a, const BigNumber &b)
 //{
 //	BigNumber res;
@@ -36,13 +62,23 @@ BigNumber operator * (const BigNumber &a, const BigNumber &b)
 //			return BigNumber(r);
 //	return nullptr;
 //}
+
 BigNumber operator % (const BigNumber &a, const BigNumber &b)
 {
+//IK modified
 	BIGNUM *r = BN_new();
+	BN_CTX* ctx = BN_CTX_new();
+
 	if (BN_div(NULL, r, a.bn, b.bn, ctx)) {
-		return BigNumber(r);
+		BigNumber res(r);
+		BN_free(r);
+		BN_CTX_free(ctx);
+		return res;
 	}
-	return nullptr;
+
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return BigNumber();
 }
 int operator == (const BigNumber &a, const BigNumber &b)
 {
@@ -59,27 +95,54 @@ int operator == (const BigNumber &a, const BigNumber &b)
 	@param BigNumber mod
 */
 BigNumber mdiv(BigNumber nom, BigNumber den, BigNumber mod) {
+//IK modified
 	BIGNUM *r = BN_new();
-	if (NULL == (BN_mod_inverse(r, den.bn, BigNumber(mod).bn, ctx)))
-		handleErrors();
+	BN_CTX* ctx = BN_CTX_new();
+
+	if (NULL == (BN_mod_inverse(r, den.bn, BigNumber(mod).bn, ctx))) {
+		BN_free(r);
+		BN_CTX_free(ctx);
+		handleErrors();		
+		return BigNumber();
+	}
+		
 	//printBN("res-inv: ", r);
-	if (NULL == (BN_mod_mul(r, nom.bn, r, BigNumber(mod).bn, ctx)))
+	if (NULL == (BN_mod_mul(r, nom.bn, r, BigNumber(mod).bn, ctx))) {
+		BN_free(r);
+		BN_CTX_free(ctx);
 		handleErrors();
-	//printBN("res: ", r);
-	return BigNumber(r);
+		return BigNumber();
+	}
+
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
 
 //
 BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
-	BIGNUM *r = BN_new();
-	if (!BN_mod_sub(r, a.bn, b.bn, m.bn, ctx))
-		return nullptr;
-	return BigNumber(r);
+//IK modified
+	BIGNUM* r = BN_new();
+	BN_CTX* ctx = BN_CTX_new();
+
+	if (!BN_mod_sub(r, a.bn, b.bn, m.bn, ctx)) {
+		BN_free(r);
+		BN_CTX_free(ctx);
+		return BigNumber();
+	}
+	
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
 
 EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q, Curve *curve) {
-	EC_POINT *secret = EC_POINT_new(curve->curve);
-	EC_POINT *buff = EC_POINT_new(curve->curve);
+//IK modified
+	EC_POINT *secret = EC_POINT_new(curve->curve);	
+	EC_POINT* buff = NULL;				//EC_POINT *buff = EC_POINT_new(curve->curve);
+
 	for (int i = 0; i < proj.size(); i++) {
 		BigNumber lambda(1);
 		for (int j = 0; j < proj.size(); j++) {
@@ -99,11 +162,12 @@ EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<int> coalition, BigNumber q
 
 		if (i == 0) {
 			if (!EC_POINT_copy(secret, buff)) handleErrors();
+			EC_POINT_free(buff);
 			continue;
 		}
 		if (!EC_POINT_add(curve->curve, secret, secret, buff, NULL)) handleErrors();
+		EC_POINT_free(buff);
 	}
-	EC_POINT_free(buff);
 	return secret;
 }
 
@@ -135,7 +199,10 @@ vector<BigNumber> shamir(BigNumber secretM, vector<int> ids, int participantN, i
 	{
 		int temp = 0;
 		for (int j = 0; j < power; j++)
-			temp += arrayA[j] * (pow(ids[i], power - j));
+//IK modified
+			//temp += arrayA[j] * (pow(ids[i], power - j));
+			temp += arrayA.at(j) * (pow(ids[i], power - j));
+//IK modified
 		arrayK.insert(arrayK.end(), (BigNumber(temp) + secretM) % q);
 	}
 	return arrayK;

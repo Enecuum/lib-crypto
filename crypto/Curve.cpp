@@ -1,27 +1,31 @@
 #include "Curve.h"
 
 Curve::Curve() {
-
-	}
+	this->curve = NULL;
+}
 
 Curve::Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy) {
-		this->curve = create_curve(a, b, p, order, gx, gy);
-		this->order = order;
-		this->field = p;
-		this->a = a;
-		this->gx = gx;
-		this->gy = gy;
-		EC_POINT *G;
+	//this->curve = create_curve(a, b, p, order, gx, gy); //IK commented
+	this->order = order;
+	this->field = p;
+	this->a = a;
+	this->gx = gx;
+	this->gy = gy;
+	EC_POINT *G;
 
-		if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, NULL))) return;
+	if (NULL == (curve = EC_GROUP_new_curve_GFp(p.bn, a.bn, b.bn, NULL))) return;
 
-		/* Create the generator */
-		if (NULL == (G = EC_POINT_new(curve)))return;
-		if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, NULL))
-			return;
-		this->G = G;
-	}
-Curve::~Curve(){}
+	/* Create the generator */
+	if (NULL == (G = EC_POINT_new(curve)))return;
+	if (1 != EC_POINT_set_affine_coordinates_GFp(curve, G, gx.bn, gy.bn, NULL))
+		return;
+	this->G = G;
+	//this->G = NULL;
+}
+Curve::~Curve(){
+	EC_POINT_free(this->G);
+	EC_GROUP_free(this->curve);
+}
 
 EC_POINT *Curve::getPoint() {
 	return EC_POINT_new(this->curve);
