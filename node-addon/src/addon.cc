@@ -81,7 +81,7 @@ Napi::Object Add(const Napi::CallbackInfo& info) {
 	NodeBN* b = Napi::ObjectWrap<NodeBN>::Unwrap(info[1].As<Napi::Object>());
 
 	BigNumber res = a->bn + b->bn;
-	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
+	return NodeBN::NewInstance(env, Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
 Napi::Object Mmul(const Napi::CallbackInfo& info) {
@@ -91,7 +91,7 @@ Napi::Object Mmul(const Napi::CallbackInfo& info) {
 	NodeBN* m = Napi::ObjectWrap<NodeBN>::Unwrap(info[2].As<Napi::Object>());
 
 	BigNumber res = (a->bn * b->bn) % m->bn;
-	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
+	return NodeBN::NewInstance(env, Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
 Napi::Object AddPoints(const Napi::CallbackInfo& info) {
@@ -103,7 +103,7 @@ Napi::Object AddPoints(const Napi::CallbackInfo& info) {
    	EC_POINT *res = EC_POINT_new(curve->crv.curve);
 	if (1 != EC_POINT_add(curve->crv.curve, res, a->p, b->p, NULL))
 		Napi::Error::New(env, "EC_POINT_add error").ThrowAsJavaScriptException();
-  	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+  	return NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object Mul(const Napi::CallbackInfo& info) {
@@ -113,7 +113,7 @@ Napi::Object Mul(const Napi::CallbackInfo& info) {
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[2].As<Napi::Object>());
 
 	EC_POINT *res = mul(a->bn, P->p, &curve->crv);
-	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+	return NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object HashToPoint(const Napi::CallbackInfo& info) {
@@ -122,7 +122,7 @@ Napi::Object HashToPoint(const Napi::CallbackInfo& info) {
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[1].As<Napi::Object>());
 
 	EC_POINT *res = mul(a->bn, curve->crv.G, &curve->crv);
-	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+	return NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
@@ -137,7 +137,7 @@ Napi::Object CreateMPK(const Napi::CallbackInfo& info) {
 	catch(unsigned long err){
         Napi::Error::New(env, ERR_error_string(err, NULL)).ThrowAsJavaScriptException();
     }
-  	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+  	return NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Array Shamir(const Napi::CallbackInfo& info) {
@@ -156,7 +156,7 @@ Napi::Array Shamir(const Napi::CallbackInfo& info) {
 
 	Napi::Array res = Napi::Array::New(env, shares.size());
 	for(uint32_t i  = 0; i < shares.size(); i++){
-		res.Set(i, NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &shares[i])));
+		res.Set(i, NodeBN::NewInstance(env, Napi::External<BigNumber>::New(info.Env(), &shares[i])));
 	}
   	return res;
 }
@@ -184,7 +184,7 @@ Napi::Array KeyProj(const Napi::CallbackInfo& info) {
 	Napi::Array res = Napi::Array::New(env, proj.size());
 	for(uint32_t i  = 0; i < proj.size(); i++){
 		EC_POINT* buf = proj[i];
-		res.Set(i, NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &buf)));
+		res.Set(i, NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &buf)));
 	}
   	return res;
 }
@@ -209,7 +209,7 @@ Napi::Object KeyRecovery(const Napi::CallbackInfo& info) {
 	}
 	EC_POINT* res = keyRecovery(proj, coalition, q->bn, &curve->crv);
 
-  	return NodePT::NewInstance(Napi::External<EC_POINT*>::New(info.Env(), &res));
+  	return NodePT::NewInstance(env, Napi::External<EC_POINT*>::New(info.Env(), &res));
 }
 
 Napi::Object WeilPairing(const Napi::CallbackInfo& info) {
@@ -220,7 +220,7 @@ Napi::Object WeilPairing(const Napi::CallbackInfo& info) {
 	NCurve* curve = Napi::ObjectWrap<NCurve>::Unwrap(info[3].As<Napi::Object>());
 	
 	BigNumber res = weilPairing(P->p, Q->p, S->p, &curve->crv);
-  	return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &res));
+  	return NodeBN::NewInstance(env, Napi::External<BigNumber>::New(info.Env(), &res));
 }
 
 Napi::Object GetRandom(const Napi::CallbackInfo& info) {
@@ -228,7 +228,7 @@ Napi::Object GetRandom(const Napi::CallbackInfo& info) {
   NodeBN* obj1 = Napi::ObjectWrap<NodeBN>::Unwrap(info[0].As<Napi::Object>());
   BigNumber bn = getRandom(obj1->bn);
 
-  return NodeBN::NewInstance(Napi::External<BigNumber>::New(info.Env(), &bn));
+  return NodeBN::NewInstance(env, Napi::External<BigNumber>::New(info.Env(), &bn));
 }
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
