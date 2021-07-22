@@ -1,3 +1,17 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * crypto_defs.cpp
+ * Error-handling class
+ *
+ * ******************************************
+ *
+ * Authors: I. Korobkov
+ */
+
 #include "crypto_defs.h"
 
 char charBuff[MAX_LEN_BUF] = "\0";

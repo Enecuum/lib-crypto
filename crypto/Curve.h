@@ -1,3 +1,16 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * Curve.h
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #ifndef __CURVE_H__
 #define __CURVE_H__
 

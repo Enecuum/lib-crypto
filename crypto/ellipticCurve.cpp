@@ -1,3 +1,17 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * ellipticCurve.cpp
+ * Elliptic Curve arithmetic in GF_p^m finite fields
+ *
+ * ******************************************
+ *
+ * Authors: https://github.com/poojagarg/ECC, A. Prudanov, I. Korobkov
+ */
+
 #ifndef EC_H
 #define EC_H
     #include "ellipticCurve.h"

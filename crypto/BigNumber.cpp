@@ -1,9 +1,21 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * BigNumber.cpp
+ * Arbitrary-precision numbers class based on OpenSSL BIGNUM
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE  
 
 #include "BigNumber.h"
-
-
 
 BigNumber::BigNumber(const BigNumber& bn) {
 	this->bn = nullptr;

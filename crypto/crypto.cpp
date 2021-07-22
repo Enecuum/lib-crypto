@@ -1,3 +1,20 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * crypto.cpp
+ * Cryptographic functions and helpers
+ * - Shamir key distribution scheme
+ * - Key recovery
+ * - Veil and Tate pairing-based signatures
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #include <iostream>
 #include <bitset>
 #include "crypto.h"

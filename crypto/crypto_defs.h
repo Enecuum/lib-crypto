@@ -1,3 +1,16 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * crypto_defs.h
+ *
+ * ******************************************
+ *
+ * Authors: I. Korobkov
+ */
+
 #ifndef __CRYPTO_DEFS_H__
 #define __CRYPTO_DEFS_H__
 

@@ -1,3 +1,16 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * ellipticCurve.h
+ *
+ * ******************************************
+ *
+ * Authors: https://github.com/poojagarg/ECC, A. Prudanov, I. Korobkov
+ */
+
 #ifndef __ELLIPTIC_CURVE_H__
 #define __ELLIPTIC_CURVE_H__
 

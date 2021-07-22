@@ -1,3 +1,16 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * BigNumber.h
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #ifndef __BIGNUMBER_H__
 #define __BIGNUMBER_H__
 
