@@ -6,7 +6,14 @@
 using namespace Givaro;
 using namespace std;
 
-ExtensionField::ExtensionField(Integer p, Integer m)
+ExtensionField::ExtensionField() {  }
+
+ExtensionField::ExtensionField(const ExtensionField& E) {
+    *this = E;
+}
+
+
+ExtensionField::ExtensionField(const Integer& p, const Integer& m)
 {
     this->p=p;
     this->m=m;
@@ -15,12 +22,12 @@ ExtensionField::ExtensionField(Integer p, Integer m)
     if(m==1)
         Fp_X.assign(irred,(Element)p);
 
-    primeField::Element tmp;
+    //primeField::Element tmp;
     Fp_X.assign(zero,Fp_X.zero);
     Fp_X.assign(one,Fp_X.one);
     Fp_X.assign(mOne,Fp_X.mOne);
 }
-ExtensionField::ExtensionField(Integer p, Integer m, std::string strIrred)
+ExtensionField::ExtensionField(const Integer & p, const Integer& m, const std::string& strIrred)
 {
 	this->p = p;
 	this->m = m;
@@ -38,8 +45,11 @@ ExtensionField::ExtensionField(Integer p, Integer m, std::string strIrred)
 	Fp_X.assign(one, Fp_X.one);
 	Fp_X.assign(mOne, Fp_X.mOne);
 }
-ExtensionField ExtensionField::operator=(const ExtensionField& E)
+ExtensionField& ExtensionField::operator=(const ExtensionField& E)
 {
+    if (this == &E)
+        return *this;
+
     p=E.p;
     m=E.m;
     Fp=E.Fp;
@@ -194,12 +204,22 @@ ecPoint::ecPoint(bool b)
 {
     identity=b;
 }
-ecPoint::ecPoint(Element x1, Element y1)
+
+
+ecPoint::ecPoint(const Element& x1, const Element& y1)
 : identity(false) {
     x=x1;
     y=y1;
 }
-ecPoint ecPoint::operator=( const ecPoint& P)
+
+
+ecPoint::ecPoint(const ecPoint& P)
+{
+    *this = P;
+}
+
+
+ecPoint& ecPoint::operator=( const ecPoint& P)
 {
     if(P.identity)
     {
@@ -217,22 +237,58 @@ bool ecPoint::operator==(const ecPoint& t) const
 bool ecPoint::operator< (const ecPoint& t) const
 {return identity ? !t.identity : (!t.identity && (x<t.x || (x==t.x && y<t.y)));}
 
+
+
+
+ellipticCurve::ellipticCurve() {
+    Kptr = nullptr;
+    if (nullptr == (Kptr = new ExtensionField()))
+        handleError(NO_MEMORY);
+}
+
+ellipticCurve::ellipticCurve(const ellipticCurve& F) {
+    Kptr = nullptr;
+    if (nullptr == (Kptr = new ExtensionField())) {
+        handleError(NO_MEMORY);
+        return;
+    }
+
+    *this = F;
+}
+
 ellipticCurve::ellipticCurve(Integer p, Integer m, std::string strIrred, std::string strA, std::string strB)
 {
-	Kptr = new ExtensionField(p, m, strIrred);
+    type = 0;
+    Kptr = nullptr;
+	if (nullptr == (Kptr = new ExtensionField(p, m, strIrred))) {
+        handleError(NO_MEMORY);
+        return;
+    }
+
 	Kptr->readElement(strA, A);
 	Kptr->readElement(strB, B);
-	type = 0;
-	cout << endl;
 }
 ellipticCurve::~ellipticCurve()
 {
-    free(Kptr);
+    delete Kptr;
+    Kptr = nullptr;
 }
 
-ellipticCurve ellipticCurve::operator=( const ellipticCurve& F)
+ellipticCurve& ellipticCurve::operator=( const ellipticCurve& F)
 {
-    Kptr=F.Kptr;
+    if (this == &F)
+        return *this; 
+
+    if (Kptr != nullptr) {
+        delete Kptr;
+        Kptr = nullptr;
+        if (nullptr == (Kptr = new ExtensionField())) {
+            handleError(NO_MEMORY);
+            return *this;
+        }
+    }
+
+    *Kptr = *F.Kptr;
     A=F.A;
     B=F.B;
     C=F.C;
@@ -253,18 +309,73 @@ void ellipticCurve::print()
     cout<<"type"<<type<<endl;
 }
 
-ellipticCurveFq::ellipticCurveFq(ellipticCurve* e)
-{
-    ec=e;
-    field=ec->Kptr;
+
+ellipticCurveFq::ellipticCurveFq()  {
+    ec = nullptr;
+    field = nullptr;
+
+    if (nullptr == (ec = new ellipticCurve())) {
+        handleError(NO_MEMORY);
+        return;
+    }
+           
+    field = ec->Kptr;
+    identity.identity = false;
+}
+
+ellipticCurveFq::ellipticCurveFq(const ellipticCurveFq& F) {  
+    ec = nullptr;
+    field = nullptr;
+    if (nullptr == (ec = new ellipticCurve())) {
+        handleError(NO_MEMORY);
+        return;
+    }    
+
+    *this = F;
+}
+
+
+ellipticCurveFq::ellipticCurveFq(const ellipticCurve* e) {
+    ec = nullptr;
+    field = nullptr;
+    if (nullptr == (ec = new ellipticCurve())) {
+        handleError(NO_MEMORY);
+        return;
+    }
+    
+    *ec=*e;
+    field = ec->Kptr;
     identity.identity=true;
-    this->d=d;
 }
+
+ellipticCurveFq& ellipticCurveFq::operator=(const ellipticCurveFq& F) {
+    if (this == &F)
+        return *this;
+
+    if (ec != nullptr) {
+        delete ec;
+        ec = nullptr;
+        if (nullptr == (ec = new ellipticCurve())) {
+            handleError(NO_MEMORY);
+            return *this;
+        }
+    }    
+
+    *ec = *F.ec;
+    field = ec->Kptr;
+    identity.identity = F.identity.identity;
+    return *this;
+}
+
+
+
 ellipticCurveFq::~ellipticCurveFq()
-{  
-    free(ec);
-    free(field);
+{      
+    delete this->ec;     //Mem of Kptr will be also ñleared   
+    this->ec = nullptr;  
+    this->field = nullptr;   
 }
+
 const ellipticCurveFq::Point& ellipticCurveFq::inv(Point& Q, const Point &P) 
 {
     if(P.identity)
@@ -278,7 +389,7 @@ const ellipticCurveFq::Point& ellipticCurveFq::inv(Point& Q, const Point &P)
     field->additiveInv(Q.y,P.y); //Q.y+P.y=0
     return Q;
 }
-bool ellipticCurveFq::isInv(const Point& Q, const Point &P) //is Q+P=point at inifinity?
+bool ellipticCurveFq::isInv(const Point& Q, const Point &P) 
 {
     Point R;
     inv(R,P);
@@ -287,7 +398,7 @@ bool ellipticCurveFq::isInv(const Point& Q, const Point &P) //is Q+P=point at in
     return false;
 }
 
-ellipticCurveFq::Point& ellipticCurveFq::Double(Point &R,Point &P) 
+ellipticCurveFq::Point& ellipticCurveFq::Double(Point &R, const Point &P) 
 {
     if (P.identity||isInv(P,P)) 
     {
@@ -317,7 +428,8 @@ ellipticCurveFq::Point& ellipticCurveFq::Double(Point &R,Point &P)
     R.y=y;
     return R;
 }
-ellipticCurveFq::Point& ellipticCurveFq::add(Point &R,Point &P, Point &Q) 
+
+ellipticCurveFq::Point& ellipticCurveFq::add(Point &R, const Point& P, const Point& Q)
 {
     if(P.identity&&Q.identity||isInv(P,Q))
     {
@@ -372,7 +484,7 @@ void ellipticCurveFq::show(Point& P)
     cout<<")";
 }
 //R=kP
-ellipticCurveFq::Point& ellipticCurveFq::scalarMultiply(Point&R, Point& P, Integer k, Integer order)//order of P 
+ellipticCurveFq::Point& ellipticCurveFq::scalarMultiply(Point&R, const Point& P, Integer k, const Integer order)//order of P 
 {
     if(P.identity)
     {
@@ -397,6 +509,8 @@ ellipticCurveFq::Point& ellipticCurveFq::scalarMultiply(Point&R, Point& P, Integ
     }
     return R;
 }
+
+
 /*type 0: E/K, char(K)!=2: y2 = x3+ax+b,
  type 1: non-supersingular E/F2m: y2 + xy = x3+ax2+b,
  tyep 2: supersingular E/F2m: y2 + cy = x3 + ax + b*/

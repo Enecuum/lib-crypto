@@ -4,13 +4,13 @@
 echo "Build library"
 
 # Path to repo
-repoPath="/home/anton/enecuum/tate"
+repoPath="/mnt/c/korobkov/project/repo/lib-crypto"
 # Path to all node addon files
 addonPath="$repoPath/node-addon"
 # Path to addon source
 srcAddonPath="$addonPath/src"
 libName="libenq.a"
-naddonName="enq.node"
+naddonName="addon.node"
 binPackName="enq-bin"
 # Path to final bin files
 nmPath="$addonPath/node_modules/$binPackName"
@@ -21,13 +21,18 @@ g++  \
  -DHAVE_CONFIG_H \
  -DWIN_EXPORT \
  -I. \
+ -I/tmp/givaro-build/include \
  -O2   -Wall -g -DNDEBUG -UGIVARO_DEBUG -UDEBUG -std=gnu++11 \
  -fPIC \
  -c \
- ./crypto/*.cpp \
+ ./crypto/BigNumber.cpp \
+ ./crypto/Curve.cpp \
+ ./crypto/ellipticCurve.cpp \
+ ./crypto/crypto.cpp \
+ ./crypto/crypto_defs.cpp \
  -lgivaro -lgmpxx -lgmp -lcrypto
 
- ar rvs libenq.a crypto.o Curve.o BigNumber.o ellipticCurve.o
+ ar rvs libenq.a crypto.o Curve.o BigNumber.o ellipticCurve.o crypto_defs.o
 
 ranlib libenq.a
 

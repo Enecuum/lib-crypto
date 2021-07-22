@@ -1,57 +1,119 @@
-
 #include <iostream>
 #include <bitset>
 #include "crypto.h"
+
 using namespace std;
 
-BN_CTX *ctx = BN_CTX_new();
 
 BigNumber operator + (const BigNumber &a, const BigNumber &b)
 {
-	BIGNUM *r = BN_new();
-	if (!BN_add(r, a.bn, b.bn))
-		return nullptr;
-	return BigNumber(r);
+	BIGNUM *r = nullptr;
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+		
+	if (!BN_add(r, a.bn, b.bn)) {
+		BN_free(r);
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}	
+
+	BigNumber res(r);
+	BN_free(r);
+	return res;
 }
+
 BigNumber operator - (const BigNumber &a, const BigNumber &b)
 {
-	BIGNUM *r = BN_new();
-	if (!BN_mod_sub(r, a.bn, b.bn, BigNumber(1223).bn, ctx))
-		return nullptr;
-	return BigNumber(r);
+	BIGNUM *r = nullptr; 
+    BN_CTX* ctx = nullptr; 
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (nullptr == (ctx = BN_CTX_new())) {
+		BN_free(r);
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (!BN_mod_sub(r, a.bn, b.bn, BigNumber(1223).bn, ctx)) {
+		BN_CTX_free(ctx);
+		BN_free(r);
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}	
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
+
 BigNumber operator * (const BigNumber &a, const BigNumber &b)
 {
-	BIGNUM *r = BN_new();
-	if (BN_mul(r, a.bn, b.bn, ctx)) {
-		return BigNumber(r);
+	BIGNUM* r = nullptr;
+	BN_CTX* ctx = nullptr;
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
 	}
-	return nullptr;
+
+	if (nullptr == (ctx = BN_CTX_new())) {
+		BN_free(r);
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (BN_mul(r, a.bn, b.bn, ctx)) {		
+		BigNumber res(r);
+		BN_free(r);
+		BN_CTX_free(ctx);
+		return res;
+	}
+
+	BN_free(r);
+	BN_CTX_free(ctx);
+	handleError(CALC_FAILED);
+	return BigNumber();
 }
-//BigNumber operator / (const BigNumber &a, const BigNumber &b)
-//{
-//	BigNumber res;
-//	BIGNUM *r = BN_new();
-//	if (BN_mod_inverse(r, b.bn, BigNumber(1223).bn, ctx))
-//		if (BN_mod_mul(r, r, a.bn, BigNumber(1223).bn, ctx))
-//			return BigNumber(r);
-//	return nullptr;
-//}
+
+
 BigNumber operator % (const BigNumber &a, const BigNumber &b)
 {
-	BIGNUM *r = BN_new();
-	if (BN_div(NULL, r, a.bn, b.bn, ctx)) {
-		return BigNumber(r);
+	BIGNUM* r = nullptr;
+	BN_CTX* ctx = nullptr;
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
 	}
-	return nullptr;
+
+	if (nullptr == (ctx = BN_CTX_new())) {
+		BN_free(r);
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (BN_div(nullptr, r, a.bn, b.bn, ctx)) {
+		BigNumber res(r);
+		BN_free(r);
+		BN_CTX_free(ctx);
+		return res;
+	}
+
+	BN_free(r);
+	BN_CTX_free(ctx);
+	handleError(CALC_FAILED);
+	return BigNumber();
 }
 int operator == (const BigNumber &a, const BigNumber &b)
 {
 	return BN_cmp(a.bn, b.bn);
-	//if (res == 0)
-	//	return 1;
-	//else
-	//	return 0;
 }
 
 /* @brief Modulo operation
@@ -59,38 +121,80 @@ int operator == (const BigNumber &a, const BigNumber &b)
 	@param BigNumber den
 	@param BigNumber mod
 */
-BigNumber mdiv(BigNumber nom, BigNumber den, BigNumber mod) {
-	BIGNUM *r = BN_new();
-	if (NULL == (BN_mod_inverse(r, den.bn, BigNumber(mod).bn, ctx)))
-		handleErrors();
-	//printBN("res-inv: ", r);
-	if (NULL == (BN_mod_mul(r, nom.bn, r, BigNumber(mod).bn, ctx)))
-		handleErrors();
-	//printBN("res: ", r);
-	return BigNumber(r);
+BigNumber mdiv(const BigNumber& nom, const BigNumber& den, const BigNumber& mod) {
+	BIGNUM* r = nullptr;
+	BN_CTX* ctx = nullptr;
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (nullptr == (ctx = BN_CTX_new())) {
+		BN_free(r);
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (nullptr == (BN_mod_inverse(r, den.bn, BigNumber(mod).bn, ctx))) {
+		BN_free(r);
+		BN_CTX_free(ctx);
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+		
+	if (0 == (BN_mod_mul(r, nom.bn, r, BigNumber(mod).bn, ctx))) {
+		BN_free(r);
+		BN_CTX_free(ctx);
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
 
-//
-BigNumber msub(BigNumber a, BigNumber b, BigNumber m) {
-	BIGNUM *r = BN_new();
-	if (!BN_mod_sub(r, a.bn, b.bn, m.bn, ctx))
-		return nullptr;
-	return BigNumber(r);
+BigNumber msub(const BigNumber& a, const BigNumber& b, const BigNumber& m) {
+	BIGNUM* r = nullptr;
+	BN_CTX* ctx = nullptr;
+
+	if (nullptr == (r = BN_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (nullptr == (ctx = BN_CTX_new())) {
+		BN_free(r);
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
+	if (!BN_mod_sub(r, a.bn, b.bn, m.bn, ctx)) {
+		BN_free(r);
+		BN_CTX_free(ctx);
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+	
+	BigNumber res(r);
+	BN_free(r);
+	BN_CTX_free(ctx);
+	return res;
 }
 
-EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<BigNumber> coalition, BigNumber q, Curve *curve) {
-	EC_POINT *secret = EC_POINT_new(curve->curve);
-	EC_POINT *buff = EC_POINT_new(curve->curve);
+EC_POINT* keyRecovery(const vector<EC_POINT*>& proj, const vector<int>& coalition, const BigNumber& q, const Curve *curve) {
+	EC_POINT *secret = EC_POINT_new(curve->curve);	
+	EC_POINT* buff = nullptr;
+
 	for (size_t i = 0; i < proj.size(); i++) {
 		BigNumber lambda(1);
 		for (size_t j = 0; j < proj.size(); j++) {
 			if (i != j) {
-				//lamb = (lamb * (0-coalition[j]))/(coalition[i]-coalition[j]) % q
-				BigNumber nom = msub(BigNumber(0), coalition[j], q);
-				BigNumber den = msub(coalition[i], coalition[j], q);
+				BigNumber nom = msub(BigNumber(0), BigNumber(coalition[j]), q);
+				BigNumber den = msub(BigNumber(coalition[i]), BigNumber(coalition[j]), q);
 				lambda = (lambda * (mdiv(nom, den, q))) % q;
-				//lambda = l % q;//BigNumber(0 - coalition[j]) / BigNumber(coalition[i] - coalition[j])) % q;
-				//cout << lambda.dec << endl;
 			}
 		}
 		if ((lambda == BigNumber(0)) == 0)
@@ -99,23 +203,28 @@ EC_POINT* keyRecovery(vector<EC_POINT*> proj, vector<BigNumber> coalition, BigNu
 		buff = mul(lambda, proj.at(i), curve);
 
 		if (i == 0) {
-			if (!EC_POINT_copy(secret, buff)) handleErrors();
+			if (!EC_POINT_copy(secret, buff)) {
+				EC_POINT_free(buff);
+				handleError(NO_MEMORY);				
+			}
+			EC_POINT_free(buff);
 			continue;
 		}
-		if (!EC_POINT_add(curve->curve, secret, secret, buff, NULL)) handleErrors();
+		if (!EC_POINT_add(curve->curve, secret, secret, buff, nullptr)) {
+			EC_POINT_free(buff);
+			handleError(CALC_FAILED);
+		}
+		EC_POINT_free(buff);
 	}
-	EC_POINT_free(buff);
 	return secret;
 }
 
-EC_POINT* hashToPoint(BigNumber hash, Curve *curve) {
+EC_POINT* hashToPoint(const BigNumber& hash, const Curve *curve) {
 	EC_POINT *ret = mul(hash, curve->G, curve);
 	return ret;
 }
 
-vector<BigNumber> generatePoly(int power) {
-	srand(time(0));
-	
+vector<BigNumber> generatePoly(const int power) {
 	// x^5 + 8x^4 + 6x^3 + 5x^2 + 10x
 	// Poly: 1077x + 5x^2 + 6x^3 + 8x^4 + x^5
 	// {1, 8, 6, 5, 1077}
@@ -126,29 +235,24 @@ vector<BigNumber> generatePoly(int power) {
 	return arrayA;
 }
 
-vector<BigNumber> shamir(BigNumber secretM, vector<BigNumber> ids, int participantN, int sufficientK, BigNumber q)
+vector<BigNumber> shamir(const BigNumber &secretM, const vector<BigNumber> &ids, const int participantN, const int sufficientK, const BigNumber& q)
 {
-	
-	//secretM = 10;
-	//participantN = 10;
-	//sufficientK = 6;
-
 	size_t power = sufficientK - 1;
 
 	vector<BigNumber> arrayA = generatePoly(power);
-
 	vector<BigNumber> arrayK;
 	for (size_t i = 0; i < ids.size(); i++)
 	{
 		BigNumber temp(0);
-		for (size_t j = 0; j < power; j++)
-			temp = temp + (arrayA[j] * (bpow(ids[i], power - j)));
+		for (size_t j = 0; j < power; j++) {
+			temp = temp + (arrayA[j] * (bpow(ids[i], power - j)));			
+		}
 		arrayK.insert(arrayK.end(), (temp + secretM) % q);
 	}
 	return arrayK;
 }
 
-BigNumber bpow(BigNumber a, int n) {
+BigNumber bpow(const BigNumber &a, const int n) {
 	BigNumber res(1);
 	for (int i = 0; i < n; i++) {
 		res = res * a;
@@ -157,7 +261,7 @@ BigNumber bpow(BigNumber a, int n) {
 }
 
 /* Get shadows of secret key (ss_i = coalition[i] * Q)*/
-vector<EC_POINT*> keyProj(vector<int> coalition, vector<BigNumber> shares, EC_POINT *Q, Curve *curve) {
+vector<EC_POINT*> keyProj(const vector<int>& coalition, const vector<BigNumber> shares, const EC_POINT *Q, const Curve *curve) {
 	vector<EC_POINT*> res;
 	for (size_t i = 0; i < coalition.size(); i++) {
 		EC_POINT *p = mul(shares[coalition[i] - 1].bn, Q, curve);
@@ -176,58 +280,79 @@ void getHash() {
 	printf("\n");
 }
 
-void handleErrors()
-{
-	printf("\n%s\n", ERR_error_string(ERR_get_error(), NULL));
-	throw ERR_get_error();
-	//system("pause");
-	//abort();
-}
-
-int test(int a, int b) {
+int test(const int a, const int b) {
 	throw 1;
 }
 
-void printBN(char* desc, BIGNUM * bn) {
+void printBN(const char* desc, const BIGNUM * bn) {
 	fprintf(stdout, "%s", desc);
 	BN_print_fp(stdout, bn);
-	fprintf(stdout, "\n", desc);
+	fprintf(stdout, "\n");
 }
 
-void printPoint(EC_POINT *P, Curve *curve) {
+char* printPoint(const EC_POINT *P, const Curve *curve) {
 	BigNumber x;
 	BigNumber y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, x.bn, y.bn, NULL)) handleErrors();
-	std::cout << "(" << x.toDecString() << " : " << y.toDecString() << ")" << endl;
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, x.bn, y.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		return POINTER_ERROR_RET;
+	}
+	
+	string str = "(x: " + string(x.toHexString()) + " : y: " + string(y.toHexString()) + ")";
+	strcpy(charBuff, str.c_str());
+	return charBuff;
 }
 
-EC_POINT *mul(BigNumber n, EC_POINT *P, Curve *curve) {
-	EC_POINT *R = EC_POINT_new(curve->curve);
-	if (1 != EC_POINT_mul(curve->curve, R, NULL, P, n.bn, NULL)) handleErrors();
+EC_POINT *mul(const BigNumber& n, const EC_POINT *P, const Curve *curve) {
+	EC_POINT *R = nullptr;
+	if (nullptr == (R = EC_POINT_new(curve->curve))) {
+		handleError(NO_MEMORY);
+		return POINTER_ERROR_RET;
+	}
+	if (1 != EC_POINT_mul(curve->curve, R, nullptr, P, n.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		return POINTER_ERROR_RET;
+	}
 	return R;
 }
 
-EC_POINT *createMPK(BigNumber msk, EC_POINT *P, Curve *curve) {
+EC_POINT *createMPK(const BigNumber& msk, const EC_POINT *P, const Curve *curve) {
 	EC_POINT *R = mul(msk, P, curve);
 	return R;
 }
 
-BigNumber getRandom(BigNumber max) {
-	BIGNUM *r = BN_secure_new();
+BigNumber getRandom(const BigNumber &max) {
+	BIGNUM * r = nullptr;
+	if (nullptr == (r = BN_secure_new())) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+	
 	do {
-		if (!BN_rand_range(r, max.bn)) handleErrors();
+		if (!BN_rand_range(r, max.bn)) {
+			handleError(CALC_FAILED);
+			return BigNumber();
+		}
 	} while (BN_is_zero(r));
-	return BigNumber(r);
+	BigNumber res(r);
+	BN_free(r);
+	return res;
 }
 
-BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, Curve *curve) {
+BigNumber g(const EC_POINT *P, const EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, const Curve *curve) {
 	BigNumber px;
 	BigNumber py;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, px.bn, py.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, px.bn, py.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
 
 	BigNumber qx;
 	BigNumber qy;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, qx.bn, qy.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
 
 	BigNumber slope;
 
@@ -245,59 +370,104 @@ BigNumber g(EC_POINT *P, EC_POINT *Q, const BigNumber &x1, const BigNumber &y1, 
 	return mdiv(num, den, curve->field);
 }
 
-BigNumber miller(string m, EC_POINT *P, const BigNumber &x1, const BigNumber &y1, Curve *curve) {
-	EC_POINT *T = EC_POINT_new(curve->curve);
-	if (1 != EC_POINT_copy(T, P)) handleErrors();
+BigNumber miller(const string& mm, const EC_POINT *P, const BigNumber &x1, const BigNumber &y1, const Curve *curve) {
+	string m = mm;
+	EC_POINT * T = nullptr;
+	if (nullptr == (T = EC_POINT_new(curve->curve))) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+		
+	if (1 != EC_POINT_copy(T, P)) { 
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+
 	BigNumber gret;
 	BigNumber f(1);
 	for (size_t i = 0; i < m.size(); i++) {
 		f = (f * (f * g(T, T, x1, y1, curve))) % curve->field;
 		//T = T + T;
-		if (1 != EC_POINT_dbl(curve->curve, T, T, NULL)) handleErrors();
+		if (1 != EC_POINT_dbl(curve->curve, T, T, nullptr)) {
+			handleError(CALC_FAILED);
+			return BigNumber();
+		}
+
 		if (m[i] == '1') {
 			f = (f * g(T, P, x1, y1, curve)) % curve->field;
 			//T = T + P;
-			if (1 != EC_POINT_add(curve->curve, T, T, P, NULL)) handleErrors();
+			if (1 != EC_POINT_add(curve->curve, T, T, P, nullptr)) {
+				handleError(CALC_FAILED);
+				return BigNumber();
+			}
 		}
 	}
 	EC_POINT_free(T);
 	return f;
 }
 
-BigNumber evalMiller(EC_POINT *P, EC_POINT *Q, Curve *curve) {
-	// ѕор€док подгруппы G0 в двоичном представлении без первого бита (???)
-	// TODO: ѕеревод в бинарную строку
-	string m = "011011";
-	//std::string binary = std::bitset<32>(91).to_string(); //to binary
-	//std::cout << binary << "\n";
+BigNumber evalMiller(const EC_POINT *P, const EC_POINT *Q, const Curve *curve) {
+	string m = "1011011";
 	BigNumber x;
 	BigNumber y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, x.bn, y.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, Q, x.bn, y.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
 	BigNumber res = miller(m, P, x, y, curve);
-	//cout << "res: " << res.decimal() << endl;
 	return res;
 }
 
-BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *curve) {
+BigNumber weilPairing(const EC_POINT *P, const EC_POINT *Q, const EC_POINT *S, const Curve *curve) {
 
 	//int num = eval_miller(P, Q + S) / eval_miller(P, S);
 	//int den = eval_miller(Q, P - S) / eval_miller(Q, -S)
 	//return (num / den)
-	/*
-	  eta = (p^k - 1)/n
-	  num = eval_miller(P, Q+S)/eval_miller(P,  S)
-	  return (num^eta)
-	*/
-	EC_POINT *QS = EC_POINT_new(curve->curve);
+	//eta = (p^k - 1)/n
+	//num = eval_miller(P, Q+S)/eval_miller(P,  S)
+	//return (num^eta)
+	
+	
+	EC_POINT *QS = nullptr;
+	if (nullptr == (QS = EC_POINT_new(curve->curve))) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
 	// QS = Q + S
-	if (1 != EC_POINT_add(curve->curve, QS, Q, S, NULL)) handleErrors();
-	EC_POINT *invS = EC_POINT_new(curve->curve);
-	// invS = -S
-	if (1 != EC_POINT_copy(invS, S)) handleErrors();
-	if (1 != EC_POINT_invert(curve->curve, invS, NULL)) handleErrors();
-	EC_POINT *PS = EC_POINT_new(curve->curve);
+	if (1 != EC_POINT_add(curve->curve, QS, Q, S, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+
+
+	EC_POINT *invS = nullptr;
+	if (nullptr == (invS = EC_POINT_new(curve->curve))) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+	// invS = -S	
+	if (1 != EC_POINT_copy(invS, S)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+
+	if (1 != EC_POINT_invert(curve->curve, invS, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
+
+	EC_POINT *PS = nullptr;
+	if (nullptr == (PS = EC_POINT_new(curve->curve))) {
+		handleError(NO_MEMORY);
+		return BigNumber();
+	}
+
 	// PS = P - S = P + (-S)
-	if (1 != EC_POINT_add(curve->curve, PS, P, invS, NULL)) handleErrors();
+	if (1 != EC_POINT_add(curve->curve, PS, P, invS, nullptr)) {
+		handleError(CALC_FAILED);
+		return BigNumber();
+	}
 
 	BigNumber nom = mdiv(evalMiller(P, QS, curve), evalMiller(P, S, curve), curve->field);
 	BigNumber den = mdiv(evalMiller(Q, PS, curve), evalMiller(Q, invS, curve), curve->field);
@@ -307,10 +477,10 @@ BigNumber weilPairing(EC_POINT *P, EC_POINT *Q, EC_POINT *S, Curve *curve) {
 	return mdiv(nom, den, curve->field);
 }
 
-ExtensionField::Element g(ecPoint& P, ecPoint& Q, ExtensionField::Element& x1, ExtensionField::Element& y1, ellipticCurveFq& EF_q) {
+ExtensionField::Element g(const ecPoint& P, const ecPoint& Q, const ExtensionField::Element& x1, const ExtensionField::Element& y1, ellipticCurveFq& EF_q) {
 
 	ExtensionField::Element px, py, qx, qy, slope;
-	ExtensionField::Element py_plus_qy = NULL, x1_minus_px, x1_minus_qx, negqy;
+	ExtensionField::Element  x1_minus_px, x1_minus_qx, negqy;
 	ecPoint zero;
 	EF_q.scalarMultiply(zero, P, (Integer)(0), -1);
 	px = P.x;
@@ -329,9 +499,7 @@ ExtensionField::Element g(ecPoint& P, ecPoint& Q, ExtensionField::Element& x1, E
 			return x1_minus_px;
 		}
 	}
-	//std::cout << std::endl;
-	//EF_q.show(P);
-	//EF_q.show(Q);
+	
 	EF_q.field->neg(negqy, qy);
 
 	if ((px == qx) && (py == negqy)) {
@@ -369,7 +537,7 @@ ExtensionField::Element g(ecPoint& P, ecPoint& Q, ExtensionField::Element& x1, E
 	return num_div_den;
 }
 
-ExtensionField::Element miller(ecPoint& P, ecPoint& Q, ellipticCurveFq& EF_q) {
+ExtensionField::Element miller(const ecPoint& P, const ecPoint& Q, ellipticCurveFq& EF_q) {
 	BigNumber Bm("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080004");
 	
 	int len = BN_num_bits(Bm.bn) - 1; // Minus first sign bit
@@ -396,7 +564,7 @@ ExtensionField::Element miller(ecPoint& P, ecPoint& Q, ellipticCurveFq& EF_q) {
 	return f;
 }
 
-ExtensionField::Element tatePairing(ecPoint& P, ecPoint& Q, ecPoint& S, ellipticCurveFq& EF_q) {
+ExtensionField::Element tatePairing(const ecPoint& P, const ecPoint& Q, const ecPoint& S, ellipticCurveFq& EF_q) {
 	ecPoint QS;
 	// QS = Q + S
 	EF_q.add(QS, Q, S);
@@ -407,13 +575,16 @@ ExtensionField::Element tatePairing(ecPoint& P, ecPoint& Q, ecPoint& S, elliptic
 	return res;
 }
 
-ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq) {
+ellipticCurveFq::Point mapToFq(const EC_POINT *P, const Curve *curve, ellipticCurveFq& E_Fq) {
 	BigNumber x;
 	BigNumber y;
-	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, x.bn, y.bn, NULL)) handleErrors();
+	if (!EC_POINT_get_affine_coordinates_GFp(curve->curve, P, x.bn, y.bn, nullptr)) {
+		handleError(CALC_FAILED);
+		ecPoint();
+	}
 	ExtensionField::Element fq_x, fq_y;
 
-	std::stringstream stream1, stream2;
+	stringstream stream1, stream2;
 	stream1 << "0 " << x.toDecString();
 	stream2 << "0 " << y.toDecString();
 
@@ -423,24 +594,23 @@ ellipticCurveFq::Point mapToFq(EC_POINT *P, Curve *curve, ellipticCurveFq& E_Fq)
 	return res;
 }
 
-ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq& E_Fq) {
+ellipticCurveFq::Point hashToPointFq(const ecPoint &G, const BigNumber& cnum, ellipticCurveFq& E_Fq) {
+	BigNumber num = cnum;
 	ExtensionField::Element x, x1, x2, x2powed;
-	std::string strX("1 1 0");
+	string strX("1 1 0");
 	E_Fq.field->readElement(strX, x);
 	// (p ^ 2 - 1) / 2)
-	std::string residue("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000011000000000000000100001000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000001001000000000000001010000000001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000001000000000010000001000000001001000000000000001001100000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000001110000000000000001100000000001000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000110000000000000000100");
-	//BigNumber Bp("80000000000000000000000000000000000200014000000000000000000000000000000000010000800000020000000000000000000000000000000000080003");
+	string residue("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000011000000000000000100001000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000001001000000000000001010000000001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000001000000000010000001000000001001000000000000001001100000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000001110000000000000001100000000001000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000110000000000000000100");
 
 	// ((p + 1) / 4)
 	BigNumber eta3("20000000000000000000000000000000000080005000000000000000000000000000000000004000200000008000000000000000000000000000000000020001");
 
 	// Residue check
 	while (true) {
-
 		int len = BN_num_bits(num.bn); // Minus first sign bit
-		std::string stream("");
+		string stream("");
 		for (int j = 0; j < len; j++) {
-			stream.append(std::to_string(BN_is_bit_set(num.bn, len - j - 1)));
+			stream.append(to_string(BN_is_bit_set(num.bn, len - j - 1)));
 		}
 
 		// x1 = x ^ hash
@@ -452,42 +622,28 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 		E_Fq.field->add(x2, x2, x1);
 		E_Fq.field->pow(x2powed, x2, residue);
 		if (x2powed == E_Fq.field->one) {
-			//std::cout << std::endl << "hash is: " << num.toDecString() << std::endl;
 			break;
 		}
 		else {
-			//break;
-			//std::cout << std::endl << "Increase hash... " << std::endl;
 			num = num + BigNumber(1);
 		}
 	}
-	//std::cout << std::endl << "x1 " << std::endl;
-	//E_Fq.field->writeElement(x1);
-	//std::cout << std::endl << "x2 " << std::endl;
-	//E_Fq.field->writeElement(x2);
+	
 	// x1 = x ^ hash
 	// x2 = a1x + b1
 	// y coord = ax + b
+	// x2 = x1 ^ 3 + x1 // = (a1 * x + b1)
 
-	//x2 = x1 ^ 3 + x1 // = (a1 * x + b1)
-
-	//D = (2 * a1 - 4 * b1) ^ 2 + 4 * (4 * f0 - 1) * a1 ^ 2, f0Ч свободный член примитивного полинома GF(p ^ 2)
+	//D = (2 * a1 - 4 * b1) ^ 2 + 4 * (4 * f0 - 1) * a1 ^ 2
 	//y = (2 * a1 - 4 * b1 + D.sqrt()) / (2 * (4 * f0 - 1))
 	//
 	//a = y ^ ((p + 1) / 4) mod p
 	//b = (a ^ 2 + a1) / (2 * a) mod p
-	//
-	//координата искомой точки(x1, a*x + b)
-	//соответственно: х1 и х2 Ч элементы GF(p ^ 2), x2 = y ^ 2
-	//a и b Ч значение координаты y
 
 	Integer a1(x2[1]);
 	Integer b1(x2[0]);
 	Integer Ip("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	Integer f0("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541826");
-
-	//std::cout << std::endl << "a1 " << a1 << std::endl;
-	//std::cout << std::endl << "b1 " << b1 << std::endl;
 
 	Integer D = ((2 * a1 - 4 * b1) * (2 * a1 - 4 * b1) + (4 * (4 * f0 - 1) * (a1 * a1))) % Ip;
 
@@ -497,37 +653,29 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Integer nom = (2 * a1 - 4 * b1 + root);
 	Integer den = (2 * (4 * f0 - 1));
 
-	//std::cout << std::endl << "D: " << D << std::endl;
-	//std::cout << std::endl << "sqrt(D): " << sqrt(D) << std::endl;
-	//std::cout << std::endl << "root: " << root << std::endl;
-	//std::cout << std::endl << "nom: " << nom << std::endl;
-	//std::cout << std::endl << "den: " << den << std::endl;
 	ExtensionField Fp(Ip, (Integer)1);
 	ExtensionField::Element y_fp, nom_fp, den_fp;
-	std::string strnom("0 ");
-	std::string strden("0 ");
+	string strnom("0 ");
+	string strden("0 ");
 	strnom.append((string)nom);
 	strden.append((string)den);
 	Fp.readElement(strnom, nom_fp);
 	Fp.readElement(strden, den_fp);
 
 	Fp.div(y_fp, nom_fp, den_fp);
-	//std::cout << std::endl << "y_fp: " << std::endl;
-	//Fp.writeElement(y_fp);
 
 	int len2 = BN_num_bits(eta3.bn); // Minus first sign bit
-	std::string strEta3("");
+	string strEta3("");
 	for (int j = 0; j < len2; j++) {
-		strEta3.append(std::to_string(BN_is_bit_set(eta3.bn, len2 - j - 1)));
+		strEta3.append(to_string(BN_is_bit_set(eta3.bn, len2 - j - 1)));
 	}
 	ExtensionField::Element a_fq, a1_fp;
 	Fp.pow(a_fq, y_fp, strEta3);
-	//std::cout << std::endl << "a_fq: " << std::endl;
-	//Fp.writeElement(a_fq);
 
-	std::string stra1("0 ");
+	string stra1("0 ");
 	stra1.append((string)a1);
 	Fp.readElement(stra1, a1_fp);
+	
 
 	//b = (a ^ 2 + a1) / (2 * a) mod p
 	ExtensionField::Element b_fq, asqr, adbl;
@@ -535,8 +683,6 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	Fp.sqr(asqr, a_fq);
 	Fp.add(asqr, asqr, a1_fp);
 	Fp.div(b_fq, asqr, adbl);
-	//std::cout << std::endl << "b_fq: " << std::endl;
-	//Fp.writeElement(b_fq);
 
 	// Final point is two polynomials:
 	// res_x(x1)
@@ -546,7 +692,6 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 	a_tmp = a_fq[0];
 	b_tmp = b_fq[0];
 	res_x = x1;
-	//res_y = x1;
 	E_Fq.field->scalarMultiply(res_y, x, a_tmp);
 	E_Fq.field->add(res_y, res_y, b_fq);
 	ecPoint res(res_x, res_y);
@@ -554,22 +699,22 @@ ellipticCurveFq::Point hashToPointFq(ecPoint &G, BigNumber num, ellipticCurveFq&
 }
 
 bool verify_mobile(
-	std::string p,
-	std::string a,
-	std::string b,
-	std::string order,
-	std::string irred,
-	std::string gx,
-	std::string gy,
-	int k,
-	std::string s1x, 
-	std::string s1y,
-	std::string s2x,
-	std::string s2y,
-	std::string pk_lpos,
-	std::string mhash,
-	std::string mpkx,
-	std::string mpky
+	const string& p,
+	const string& a,
+	const string& b,
+	const string& order,
+	const string& irred,
+	const string& gx,
+	const string& gy,
+	const int k,
+	const string& s1x,
+	const string& s1y,
+	const string& s2x,
+	const string& s2y,
+	const string& pk_lpos,
+	const string& mhash,
+	const string& mpkx,
+	const string& mpky
 	) {
 	// H = id_hash * G
 	// Q = pk_lpos * G
@@ -578,9 +723,13 @@ bool verify_mobile(
 	Ip = Integer(p.data());
 	Im = Integer(k);
 
-	ellipticCurve *ec = new ellipticCurve(Ip, Im, irred, a, b);
+	ellipticCurve* ec = nullptr;
+	if (nullptr == (ec = new ellipticCurve(Ip, Im, irred, a, b))) {
+		handleError(NO_MEMORY);
+		return false; 
+	}
+
 	ellipticCurveFq E_Fq(ec);
-	//E_Fq.show();
 	ExtensionField::Element HFq_x, HFq_y, SFq_x, SFq_y;
 	
 	// G point
@@ -619,56 +768,77 @@ bool verify_mobile(
 	ecPoint Q_Fq;
 	BigNumber orderQ("3298c");
 	BigNumber qhash(pk_lpos);
+	BigNumber m(mhash);
 	tmpQ = hashToPoint(qhash);
 	E_Fq.scalarMultiply(Q_Fq, tmpQ, (Integer)(orderQ.toDecString()), -1);
 
 	cout << "\n Q_Fq: " << endl;
 	E_Fq.show(Q_Fq);
-	bool res = verifyTate(S1_fq, S2_fq, mhash, MPK_fq, Q_Fq, G0_fq, E_Fq);
+	bool res = verifyTate(S1_fq, S2_fq, m, MPK_fq, Q_Fq, G0_fq, E_Fq);
+
+	delete ec; 
 	return res;
 }
 
-EC_POINT* getQ(BigNumber qhash, Curve* crv, ellipticCurveFq& E_Fq) {
-
+EC_POINT* getQ(const BigNumber &qqhash, const Curve* crv, ellipticCurveFq& E_Fq) {
+	cout << "---- getQ" << endl;
 	BigNumber orderQ("3298c");
-	ecPoint tmpQ;// = hashToPoint(max_hash);
+	ecPoint tmpQ;
 	ecPoint tmp;
 	ecPoint zero;
 	int isZero = 1;
+	BigNumber one(1);
 	E_Fq.scalarMultiply(zero, tmpQ, (Integer)(0), -1);
-
+	BigNumber qhash = qqhash;
 	do {
 		tmpQ = hashToPoint(qhash);
 		E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
 		isZero = (tmp == zero);
-		qhash = qhash + BigNumber(1);
+		qhash += one;
 	} while (isZero);
 	E_Fq.scalarMultiply(tmp, tmpQ, (Integer)(orderQ.toDecString()), -1);
-
+	
 	BigNumber qx(dectox_int(tmp.x[0]));
 	BigNumber qy(dectox_int(tmp.y[0]));
 
-	EC_POINT* Q;
-	if (NULL == (Q = EC_POINT_new(crv->curve))) handleErrors();
-	if (1 != EC_POINT_set_affine_coordinates_GFp(crv->curve, Q, qx.bn, qy.bn, NULL)) handleErrors();
+	EC_POINT* Q;	
+	if (nullptr == (Q = EC_POINT_new(crv->curve))) { 
+		handleError(NO_MEMORY);
+		return POINTER_ERROR_RET;
+	}
+
+	BN_CTX* ctx = nullptr;
+	if (nullptr == (ctx = BN_CTX_new())) {
+		handleError(NO_MEMORY);
+		return POINTER_ERROR_RET;
+	}
+
+	if (1 != EC_POINT_set_affine_coordinates_GFp(crv->curve, Q, qx.bn, qy.bn, nullptr)) { 
+		BN_CTX_free(ctx);
+		handleError(CALC_FAILED);
+		return POINTER_ERROR_RET;
+	}
+
+	BN_CTX_free(ctx);
 	return Q;
 }
 
-ellipticCurveFq::Point hashToPoint(BigNumber num) {
+ellipticCurveFq::Point hashToPoint(const BigNumber &cnum) {
 	// x = a ^ ((p + 1) / 4)
 	Integer Ip("6703903964971298549787012499102923063739684112761466562144343758833001675653841939454385015500446199477853424663597373826728056308768000892499915006541827");
 	BigNumber eta("20000000000000000000000000000000000080005000000000000000000000000000000000004000200000008000000000000000000000000000000000020001");
 	ExtensionField Fp(Ip, (Integer)1);
 	ExtensionField::Element res, num_fp, den_fp;
 	
-
+	BigNumber num = cnum;
+	BigNumber one(1);
 	// Check Euler's criteria
-		// (p ^ 2 - 1) / 2)
-	std::string residue("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000001010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000001");
+	// (p ^ 2 - 1) / 2)
+	string residue("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000001010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000001");
 	ExtensionField::Element tmp, tmp1, tmp2;
 	// Residue check
 	while (true) {
-		std::string strnum("0 ");
+		string strnum("0 ");
 		strnum.append(num.toDecString());
 		Fp.readElement(strnum, num_fp);
 		//x2 = x1 ^ 3 + x1
@@ -676,42 +846,39 @@ ellipticCurveFq::Point hashToPoint(BigNumber num) {
 		Fp.add(tmp1, tmp, num_fp);
 		Fp.pow(tmp2, tmp1, residue);
 		if (tmp2 == Fp.one) {
-			//std::cout << std::endl << "hash is: " << num.toDecString() << std::endl;
 			break;
 		}
 		else {
-			//break;
-			//std::cout << std::endl << "Increase hash... " << std::endl;
-			num = num + BigNumber(1);
+			num += one;
 		}
 	}
 
 	int len2 = BN_num_bits(eta.bn); // Minus first sign bit
-	std::string strEta("");
+	string strEta("");
 	for (int j = 0; j < len2; j++) {
-		strEta.append(std::to_string(BN_is_bit_set(eta.bn, len2 - j - 1)));
+		strEta.append(to_string(BN_is_bit_set(eta.bn, len2 - j - 1)));
 	}
 	Fp.pow(res, tmp1, strEta);
 	ecPoint P_res(num_fp, res);
+	cout << "---- hashToPoint" << endl;
 	return P_res;
 }
 
-bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq, ecPoint& Q_fq, ecPoint& G0_fq, ellipticCurveFq& E_Fq) {
+bool verifyTate(const ecPoint& S1_fq, const ecPoint& S2_fq, const BigNumber& hash, const ecPoint& MPK_fq, const ecPoint& Q_fq, const ecPoint& G0_fq, ellipticCurveFq& E_Fq) {
 	BigNumber max_hash(MAX_NUMBER_256);
-	//BigNumber hash = getRandom(max_hash);
-	//cout << "\n hash: " << hash.toDecString() << endl;
 
-	ecPoint H_fq = hashToPoint(hash);//hashToPointFq(secret_fq, hash, E_Fq);
+	ecPoint H_fq = hashToPoint(hash);
 
 	BigNumber shash = getRandom(max_hash);
 	ecPoint S_fq = hashToPointFq(S1_fq, shash, E_Fq);
 
+	
+
 	ExtensionField::Element rr, bb, cc;
-	rr = tatePairing(S2_fq, G0_fq, S_fq, E_Fq);
+	rr = tatePairing( S2_fq,  G0_fq, S_fq, E_Fq);
 	bb = tatePairing(Q_fq, MPK_fq, S_fq, E_Fq);
 	cc = tatePairing(H_fq, S1_fq, S_fq, E_Fq);
-	//return 0;
-	// TODO: cacl instead of hard-code
+
 	string strEta = "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000100000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000010";
 
 	/*
@@ -729,23 +896,13 @@ bool verifyTate(ecPoint& S1_fq, ecPoint& S2_fq, BigNumber hash, ecPoint& MPK_fq,
 	E_Fq.field->mul(b1c1, b1, c1);
 
 	bool areEqual = E_Fq.field->areEqual(r1, b1c1);
-	//E_Fq.field->pow(b1c1, bbcc, strEta);
-	//cout << "\n r1: " << endl;
-	//E_Fq.field->writeElement(r1);
-	//cout << "\n b1: " << endl;
-	//E_Fq.field->writeElement(b1);
-	//cout << "\n c1: " << endl;
-	//E_Fq.field->writeElement(c1);
-	//cout << "\n b1c1: " << endl;
-	//E_Fq.field->writeElement(b1c1);
-	//cout << "\n Verified: " << areEqual << endl;
 	return areEqual;
 }
 
-std::string dectox_int(Integer num)
-{
-	std::stringstream ss;
-	std::vector<int> tmp;
+string dectox_int(Integer num)
+{	
+	stringstream ss;
+	vector<int> tmp;
 	while (num != 0)
 	{
 		Integer rest = num % 16;
@@ -753,6 +910,6 @@ std::string dectox_int(Integer num)
 		tmp.push_back(rest);
 	}
 	for (int i = (tmp.size() - 1); i >= 0; i--)
-		ss << std::hex << tmp[i];
-	return std::string(ss.str());
+		ss << hex << tmp[i];
+	return string(ss.str());
 }

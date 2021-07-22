@@ -340,3 +340,9 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 node-addon/src/build/
+
+tate_build.sh
+
+*.o
+
+libenq.a
