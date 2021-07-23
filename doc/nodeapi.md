@@ -6,6 +6,9 @@
 - **[Curve](#curve)**
 - **[Point](#point)**
   - **[xy](#xy)**
+  - **[x](#x)**
+  - **[y](#y)**
+  - **[isInfinity](#isInfinity)**
 - **[mul](#mul)**
 - **[createMPK](#creatempk)**
 - **[getRandom](#getrandom)**
@@ -46,9 +49,9 @@ Returns a decimal number of `BigNumber`
 <a name="curve"></a>
 #### NCurve
 ```js
-let curve = new addon.NCurve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy)
+let curve = addon.Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy)
 ````
-`NCurve` is a method that creates an instance of `NCurve` class which is a wrap of `Curve` C++ class.
+`Curve` is a method that creates an instance of `NCurve` class which is a wrap of `Curve` C++ class.
 <a name="point"></a>
 #### Point
 ```js
@@ -79,6 +82,14 @@ pt.y(curve)
 > 2
 ````
 Returns a Y coordinate in decimal format.
+<a name="isInfinity"></a>
+#### isInfinity
+```js
+let pt = addon.Point(0, 0, curve)
+pt.isInfinity(curve)
+> 1
+````
+Check if point is at infinity or not. Returns 1 at infinity, 0 otherwise
 <a name="mul"></a>
 #### mul
 Wrap of [mul](../doc/cppapi.md#mul)
@@ -130,19 +141,17 @@ addon.sign(M, leadID, G, G0, secret, curve)
 ```
 Sing a `M` message. Returns an object of sign as two points coordinates
 ```js
-  s1 : R = randomPoint * G0,
-  s2 : S = randomPoint * H + SK_LPoS
+  s1 : R = random * G0,
+  s2 : S = random * H + SK_LPoS
 Returned object:
 {
-	s1 : {
-		p : s1,
-		x : decimal,
-		y : decimal
+	"r":{
+		"x": decimal,
+		"y": decimal
 	},
-	s2 : {
-		p : s2,
-		x : decimal,
-		y : decimal
+	"s":{
+		"x": decimal,
+		"y": decimal
 	}
 }
 ```

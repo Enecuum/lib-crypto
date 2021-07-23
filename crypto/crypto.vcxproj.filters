@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Файлы исходного кода\node-addon">
+      <UniqueIdentifier>{f5484287-8437-4929-92f7-076f2adc3369}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы исходного кода\node-addon\src">
+      <UniqueIdentifier>{860dd26f-a240-4cb2-9c4a-4d418261197c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы исходного кода\node-addon\inc">
+      <UniqueIdentifier>{8971d4b0-206e-4c26-8ea8-15876b6436a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BigNumber.cpp">
@@ -25,6 +34,18 @@
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="ellipticCurve.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\node-addon\src\addon.cc">
+      <Filter>Файлы исходного кода\node-addon\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\node-addon\src\crypto_addon.cc">
+      <Filter>Файлы исходного кода\node-addon\src</Filter>
+    </ClCompile>
+    <ClCompile Include="crypto_defs.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,5 +62,52 @@
     <ClInclude Include="Curve.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="constants.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="ellipticCurve.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\BigNumber.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\constants.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\crypto.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\Curve.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\ec_conf.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\ellipticCurve.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\givaro-config.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node-addon\src\addon.h">
+      <Filter>Файлы исходного кода\node-addon\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node-addon\src\crypto_addon.h">
+      <Filter>Файлы исходного кода\node-addon\src</Filter>
+    </ClInclude>
+    <ClInclude Include="crypto_defs.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\crypto_defs.h">
+      <Filter>Файлы исходного кода\node-addon\inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\node-addon\addon.js">
+      <Filter>Файлы исходного кода\node-addon</Filter>
+    </None>
+    <None Include="..\node-addon\tate_pos.js">
+      <Filter>Файлы исходного кода\node-addon</Filter>
+    </None>
   </ItemGroup>
 </Project>

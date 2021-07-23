@@ -12,12 +12,15 @@
           'VCCLCompilerTool': { 'ExceptionHandling': 1 },
         },
       "include_dirs" : [
-        "<!@(node -p \"require('node-addon-api').include\")"
+        "<!@(node -p \"require('node-addon-api').include\")",
+	"/tmp/givaro-build/include"
       ],
       'dependencies': ["<!(node -p \"require('node-addon-api').gyp\")"],
       "target_name": "addon",
-      "sources": [  "addon.cc", "node-bignumber.cc", "node-point.cc" , "node-curve.cc"  ],
-      "libraries": [ "../../../x64/dll/crypto.lib" ],
+      "sources": [  "addon.cc", "crypto_addon.cc" ],
+      "libraries": ['./node_modules/enq-bin/libenq.a',
+        '/tmp/givaro-build/lib/libgivaro.a',
+'-lgmpxx', '-lgmp' ],
     }
   ]
 }

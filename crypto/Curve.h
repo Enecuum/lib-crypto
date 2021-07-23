@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __CURVE_H__
+#define __CURVE_H__
 
 #ifdef _WIN32
 # ifdef WIN_EXPORT
@@ -12,22 +13,30 @@
 
 #include <openssl/ec.h>
 #include "BigNumber.h"
+#include "crypto_defs.h"
 
 class EXPORTED Curve
 {
 public:
 	Curve();
-	Curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
+	Curve(const Curve& C);
+	Curve(const BigNumber& a, const BigNumber& b, const BigNumber& p, const BigNumber& order, const BigNumber& gx, const BigNumber& gy);
 	~Curve();
-	EC_POINT *getPoint();
+	EC_POINT* getPoint();
 	EC_GROUP* getCurve();
+	void setPointByCopy(const EC_POINT* G);
 	BigNumber order;
 	BigNumber field;
 	BigNumber a;
 	BigNumber gx;
 	BigNumber gy;
-	EC_GROUP *curve;
-	EC_POINT *G;
+	EC_POINT* G;
+	EC_GROUP* curve;
+	std::string toDecString();
+	Curve& operator=(const Curve& C);
+private:
+	void createDefault();
 };
-EC_GROUP *create_curve(BigNumber a, BigNumber b, BigNumber p, BigNumber order, BigNumber gx, BigNumber gy);
+EC_GROUP* create_curve(const BigNumber& a, const BigNumber& b, const BigNumber& p, const BigNumber& order, const BigNumber& gx, const BigNumber& gy);
 
+#endif

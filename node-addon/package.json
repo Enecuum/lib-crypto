@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "crypto": "^1.0.1"
+    "crypto": "^1.0.1",
+    "enecuum-crypto": "https://github.com/prudanoff/enecuum-bin/raw/master/bin/linux64/enecuum-crypto.tar.gz"
   },
   "devDependencies": {},
   "scripts": {
