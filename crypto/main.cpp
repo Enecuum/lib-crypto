@@ -1,3 +1,17 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * main.cpp
+ * Example
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE  
 

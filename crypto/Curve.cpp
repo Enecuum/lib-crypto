@@ -1,3 +1,17 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * Curve.cpp
+ * Elliptic Curve class based on OpenSSL EC_GROUP over GF_p field
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #include "Curve.h"
 
 Curve::Curve() {

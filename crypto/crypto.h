@@ -1,3 +1,16 @@
+/**
+ * Enecuum Crypto Library source code
+ * See LICENCE file at the top of the source tree
+ *
+ * ******************************************
+ *
+ * crypto.h
+ *
+ * ******************************************
+ *
+ * Authors: A. Prudanov, I. Korobkov
+ */
+
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
 
